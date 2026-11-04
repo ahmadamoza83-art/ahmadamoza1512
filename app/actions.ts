@@ -26,21 +26,21 @@ function mapError(error: AuthError) {
   const message = error.message ?? "";
 
   if (error.code === "23505" || message.includes("duplicate key")) {
-    return "اسم المستخدم موجود مسبقاً.";
+    return "ناوی بەکارهێنەر پێشتر هەیە.";
   }
 
   if (message.includes("row-level security")) {
-    return "تعذر تعديل المستخدمين. صلاحيات الجدول لا تسمح بالإضافة أو الحذف.";
+    return "نەتوانرا بەکارهێنەران دەستکاری بکرێن. مۆڵەتی خشتەکە ڕێگە بە زیادکردن یان سڕینەوە نادات.";
   }
 
-  return "تعذر تنفيذ العملية. حاول مرة أخرى.";
+  return "کردارەکە سەرنەکەوت. دووبارە هەوڵبدەرەوە.";
 }
 
 export async function login(username: string, password: string) {
   const cleanUsername = username.trim();
 
   if (!cleanUsername || !password) {
-    return { ok: false as const, message: "أدخل اسم المستخدم وكلمة المرور." };
+    return { ok: false as const, message: "ناوی بەکارهێنەر و وشەی نهێنی بنووسە." };
   }
 
   const supabase = await createClient();
@@ -52,7 +52,7 @@ export async function login(username: string, password: string) {
 
   if (error) return { ok: false as const, message: mapError(error) };
   if (!data || !passwordsMatch(String(data.password ?? ""), password)) {
-    return { ok: false as const, message: "اسم المستخدم أو كلمة المرور غير صحيحة." };
+    return { ok: false as const, message: "ناوی بەکارهێنەر یان وشەی نهێنی هەڵەیە." };
   }
 
   await setSession(data.username);
@@ -66,7 +66,7 @@ export async function logout() {
 
 export async function listUsers(pin: string) {
   if (!pinMatches(pin)) {
-    return { ok: false as const, message: "رمز الإدارة غير صحيح." };
+    return { ok: false as const, message: "کۆدی بەڕێوەبردن هەڵەیە." };
   }
 
   const supabase = await createClient();
@@ -92,15 +92,15 @@ export async function createUser(
   password: string,
 ) {
   if (!pinMatches(pin)) {
-    return { ok: false as const, message: "رمز الإدارة غير صحيح." };
+    return { ok: false as const, message: "کۆدی بەڕێوەبردن هەڵەیە." };
   }
 
   const cleanUsername = username.trim();
   if (cleanUsername.length < 2 || cleanUsername.length > 50) {
-    return { ok: false as const, message: "اسم المستخدم يجب أن يكون بين 2 و 50 حرفاً." };
+    return { ok: false as const, message: "ناوی بەکارهێنەر دەبێت لە نێوان ٢ بۆ ٥٠ پیت بێت." };
   }
   if (password.length < 4 || password.length > 100) {
-    return { ok: false as const, message: "كلمة المرور يجب أن تكون بين 4 و 100 حرف." };
+    return { ok: false as const, message: "وشەی نهێنی دەبێت لە نێوان ٤ بۆ ١٠٠ پیت بێت." };
   }
 
   try {
@@ -113,13 +113,13 @@ export async function createUser(
     if (error) return { ok: false as const, message: mapError(error) };
     return { ok: true as const };
   } catch {
-    return { ok: false as const, message: "تعذر الاتصال بقاعدة البيانات. حاول مرة أخرى." };
+    return { ok: false as const, message: "پەیوەندی بە بنکەی زانیارییەوە سەرنەکەوت. دووبارە هەوڵبدەرەوە." };
   }
 }
 
 export async function deleteUser(pin: string, id: string) {
   if (!pinMatches(pin)) {
-    return { ok: false as const, message: "رمز الإدارة غير صحيح." };
+    return { ok: false as const, message: "کۆدی بەڕێوەبردن هەڵەیە." };
   }
 
   try {
@@ -132,11 +132,11 @@ export async function deleteUser(pin: string, id: string) {
 
     if (error) return { ok: false as const, message: mapError(error) };
     if (!data?.length) {
-      return { ok: false as const, message: "تعذر حذف المستخدم. تحقق من صلاحيات الحذف في الجدول." };
+      return { ok: false as const, message: "نەتوانرا بەکارهێنەر بسڕدرێتەوە. مۆڵەتی سڕینەوە لە خشتەکەدا بپشکنە." };
     }
     return { ok: true as const };
   } catch {
-    return { ok: false as const, message: "تعذر الاتصال بقاعدة البيانات. حاول مرة أخرى." };
+    return { ok: false as const, message: "پەیوەندی بە بنکەی زانیارییەوە سەرنەکەوت. دووبارە هەوڵبدەرەوە." };
   }
 }
 
@@ -144,20 +144,20 @@ function mapContainerError(error: AuthError) {
   const message = error.message ?? "";
 
   if (error.code === "23505" || message.includes("duplicate key")) {
-    return "رقم الحاوية موجود مسبقاً.";
+    return "ژمارەی کۆنتێنەر پێشتر هەیە.";
   }
 
   if (message.includes("row-level security")) {
-    return "تعذر تعديل الحاويات. صلاحيات الجدول لا تسمح بذلك.";
+    return "نەتوانرا کۆنتێنەرەکان دەستکاری بکرێن. مۆڵەتی خشتەکە ڕێگە بەم کردارە نادات.";
   }
 
-  return "تعذر تنفيذ العملية. حاول مرة أخرى.";
+  return "کردارەکە سەرنەکەوت. دووبارە هەوڵبدەرەوە.";
 }
 
 async function requireUser() {
   const username = await getSessionUser();
   if (!username) {
-    return { ok: false as const, message: "يجب تسجيل الدخول أولاً." };
+    return { ok: false as const, message: "سەرەتا دەبێت بچیتە ژوورەوە." };
   }
   return { ok: true as const, username };
 }
@@ -185,7 +185,7 @@ export async function listContainers() {
       })) as Container[],
     };
   } catch {
-    return { ok: false as const, message: "تعذر الاتصال بقاعدة البيانات. حاول مرة أخرى." };
+    return { ok: false as const, message: "پەیوەندی بە بنکەی زانیارییەوە سەرنەکەوت. دووبارە هەوڵبدەرەوە." };
   }
 }
 
@@ -195,7 +195,7 @@ export async function createContainer(containerNumber: string) {
 
   const cleanNumber = containerNumber.trim();
   if (!cleanNumber || cleanNumber.length > 40) {
-    return { ok: false as const, message: "أدخل رقم حاوية صالحاً." };
+    return { ok: false as const, message: "ژمارەیەکی دروستی کۆنتێنەر بنووسە." };
   }
 
   try {
@@ -218,7 +218,7 @@ export async function createContainer(containerNumber: string) {
       } as Container,
     };
   } catch {
-    return { ok: false as const, message: "تعذر الاتصال بقاعدة البيانات. حاول مرة أخرى." };
+    return { ok: false as const, message: "پەیوەندی بە بنکەی زانیارییەوە سەرنەکەوت. دووبارە هەوڵبدەرەوە." };
   }
 }
 
@@ -250,6 +250,6 @@ export async function listContainerItems(containerId: string) {
       })) as ContainerItem[],
     };
   } catch {
-    return { ok: false as const, message: "تعذر الاتصال بقاعدة البيانات. حاول مرة أخرى." };
+    return { ok: false as const, message: "پەیوەندی بە بنکەی زانیارییەوە سەرنەکەوت. دووبارە هەوڵبدەرەوە." };
   }
 }

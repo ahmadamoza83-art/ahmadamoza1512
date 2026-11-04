@@ -4,6 +4,7 @@ import { useCallback, useEffect, useId, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { createUser, deleteUser, listUsers, login, logout } from "@/app/actions";
 import { Dashboard } from "@/app/dashboard";
+import { formatDate } from "@/lib/format-date";
 import type { AppUser } from "@/lib/users";
 
 function FormError({ message }: { message: string }) {
@@ -12,15 +13,6 @@ function FormError({ message }: { message: string }) {
       {message}
     </div>
   );
-}
-
-function formatDate(value: string) {
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return value;
-  return new Intl.DateTimeFormat("ar", {
-    dateStyle: "medium",
-    timeStyle: "short",
-  }).format(date);
 }
 
 export function AuthScreen({ initialUsername }: { initialUsername: string | null }) {
@@ -118,7 +110,7 @@ export function AuthScreen({ initialUsername }: { initialUsername: string | null
   function onUnlock(event: FormEvent) {
     event.preventDefault();
     if (pin.trim() !== "1512") {
-      setPinError("رمز الإدارة غير صحيح.");
+      setPinError("کۆدی بەڕێوەبردن هەڵەیە.");
       return;
     }
     setPinError("");
@@ -139,7 +131,7 @@ export function AuthScreen({ initialUsername }: { initialUsername: string | null
     }
     setNewName("");
     setNewPassword("");
-    setCreateMessage("تم إنشاء المستخدم.");
+    setCreateMessage("بەکارهێنەر دروست کرا.");
     await refreshUsers(unlockedPin);
   }
 
@@ -171,15 +163,15 @@ export function AuthScreen({ initialUsername }: { initialUsername: string | null
               <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-900 text-white">
                 <LockIcon />
               </div>
-              <h1 className="mt-5 text-2xl font-bold text-slate-900">تسجيل الدخول</h1>
+              <h1 className="mt-5 text-2xl font-bold text-slate-900">چوونەژوورەوە</h1>
               <p className="mt-2 text-sm leading-6 text-slate-500">
-                أدخل اسم المستخدم وكلمة المرور للمتابعة.
+                ناوی بەکارهێنەر و وشەی نهێنی بنووسە بۆ بەردەوامبوون.
               </p>
             </div>
 
             <form onSubmit={onLogin} className="space-y-4">
               <label className="block text-start">
-                <span className="mb-2 block text-sm font-medium text-slate-700">اسم المستخدم</span>
+                <span className="mb-2 block text-sm font-medium text-slate-700">ناوی بەکارهێنەر</span>
                 <input
                   value={loginName}
                   onChange={(event) => setLoginName(event.target.value)}
@@ -189,7 +181,7 @@ export function AuthScreen({ initialUsername }: { initialUsername: string | null
                 />
               </label>
               <label className="block text-start">
-                <span className="mb-2 block text-sm font-medium text-slate-700">كلمة المرور</span>
+                <span className="mb-2 block text-sm font-medium text-slate-700">وشەی نهێنی</span>
                 <span className="flex h-12 items-center rounded-2xl border border-slate-200 bg-slate-50 focus-within:border-teal-700 focus-within:bg-white focus-within:ring-4 focus-within:ring-teal-700/10">
                   <input
                     value={loginPassword}
@@ -203,7 +195,7 @@ export function AuthScreen({ initialUsername }: { initialUsername: string | null
                     onClick={() => setShowLoginPassword((current) => !current)}
                     className="px-4 text-xs font-medium text-slate-500"
                   >
-                    {showLoginPassword ? "إخفاء" : "إظهار"}
+                    {showLoginPassword ? "شاردنەوە" : "پیشاندان"}
                   </button>
                 </span>
               </label>
@@ -215,7 +207,7 @@ export function AuthScreen({ initialUsername }: { initialUsername: string | null
                 disabled={loginPending}
                 className="h-12 w-full rounded-2xl bg-teal-700 text-sm font-semibold text-white transition hover:bg-teal-800 disabled:opacity-60"
               >
-                {loginPending ? "جارٍ التحقق..." : "دخول"}
+                {loginPending ? "چاوەڕوانبە..." : "چوونەژوورەوە"}
               </button>
             </form>
 
@@ -224,7 +216,7 @@ export function AuthScreen({ initialUsername }: { initialUsername: string | null
               onClick={() => setAdminOpen(true)}
               className="mt-3 h-12 w-full rounded-2xl border border-slate-200 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
             >
-              لوحة الإدارة
+              پانێڵی بەڕێوەبردن
             </button>
           </section>
       </main>
@@ -233,7 +225,7 @@ export function AuthScreen({ initialUsername }: { initialUsername: string | null
         <div className="fixed inset-0 z-50 flex items-end justify-center bg-slate-950/50 p-4 sm:items-center">
           <button
             type="button"
-            aria-label="إغلاق"
+            aria-label="داخستن"
             className="absolute inset-0 cursor-default"
             onClick={closeAdmin}
           />
@@ -247,33 +239,33 @@ export function AuthScreen({ initialUsername }: { initialUsername: string | null
               type="button"
               onClick={closeAdmin}
               className="absolute end-5 top-5 flex h-9 w-9 items-center justify-center rounded-full text-slate-500 hover:bg-slate-100"
-              aria-label="إغلاق"
+              aria-label="داخستن"
             >
               ×
             </button>
 
             <h2 id={titleId} className="text-xl font-bold text-slate-900">
-              لوحة الإدارة
+              پانێڵی بەڕێوەبردن
             </h2>
             <p className="mt-1 text-sm text-slate-500">
-              {unlockedPin ? "أضف مستخدماً أو احذف حساباً موجوداً." : "أدخل رمز الإدارة للمتابعة."}
+              {unlockedPin ? "بەکارهێنەر زیاد بکە یان هەژمارێکی هەبوو بسڕەوە." : "کۆدی بەڕێوەبردن بنووسە بۆ بەردەوامبوون."}
             </p>
 
             {unlockedPin ? (
               <div className="mt-6 space-y-6">
                 <form onSubmit={onCreate} className="space-y-3 rounded-2xl bg-slate-50 p-4">
-                  <h3 className="text-sm font-semibold text-slate-800">مستخدم جديد</h3>
+                  <h3 className="text-sm font-semibold text-slate-800">بەکارهێنەری نوێ</h3>
                   <input
                     value={newName}
                     onChange={(event) => setNewName(event.target.value)}
-                    placeholder="اسم المستخدم"
+                    placeholder="ناوی بەکارهێنەر"
                     autoComplete="off"
                     className="admin-field h-11 w-full rounded-xl border border-slate-700 bg-slate-800 px-3 text-start text-white caret-white outline-none placeholder:text-slate-400 focus:border-teal-400"
                   />
                   <input
                     value={newPassword}
                     onChange={(event) => setNewPassword(event.target.value)}
-                    placeholder="كلمة المرور"
+                    placeholder="وشەی نهێنی"
                     type="password"
                     autoComplete="new-password"
                     className="admin-field h-11 w-full rounded-xl border border-slate-700 bg-slate-800 px-3 text-start text-white caret-white outline-none placeholder:text-slate-400 focus:border-teal-400"
@@ -287,16 +279,16 @@ export function AuthScreen({ initialUsername }: { initialUsername: string | null
                     disabled={createPending}
                     className="h-11 w-full rounded-xl bg-slate-900 text-sm font-semibold text-white disabled:opacity-60"
                   >
-                    {createPending ? "جارٍ الإنشاء..." : "إنشاء المستخدم"}
+                    {createPending ? "خەریکە دروست دەکرێت..." : "دروستکردنی بەکارهێنەر"}
                   </button>
                 </form>
 
                 <section>
                   <div className="mb-3 flex items-center justify-between gap-3">
-                    <h3 className="font-semibold text-slate-900">المستخدمون</h3>
+                    <h3 className="font-semibold text-slate-900">بەکارهێنەران</h3>
                     <span className="inline-flex items-center gap-2 text-xs text-slate-500">
                       <span className="h-2 w-2 animate-pulse rounded-full bg-teal-500" />
-                      مباشر
+                      ڕاستەوخۆ
                     </span>
                   </div>
                   {listError ? (
@@ -306,7 +298,7 @@ export function AuthScreen({ initialUsername }: { initialUsername: string | null
                   ) : null}
                   {users.length === 0 ? (
                     <p className="rounded-2xl border border-dashed border-slate-200 px-4 py-8 text-center text-sm text-slate-500">
-                      لا يوجد مستخدمون بعد.
+                      هێشتا هیچ بەکارهێنەرێک نییە.
                     </p>
                   ) : (
                     <ul className="divide-y divide-slate-100">
@@ -324,14 +316,14 @@ export function AuthScreen({ initialUsername }: { initialUsername: string | null
                                 disabled={deletingId === user.id}
                                 className="rounded-xl bg-rose-600 px-3 py-2 text-xs font-semibold text-white disabled:opacity-60"
                               >
-                                تأكيد
+                                دڵنیاکردنەوە
                               </button>
                               <button
                                 type="button"
                                 onClick={() => setPendingDeleteId(null)}
                                 className="rounded-xl border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-600"
                               >
-                                تراجع
+                                گەڕانەوە
                               </button>
                             </div>
                           ) : (
@@ -340,7 +332,7 @@ export function AuthScreen({ initialUsername }: { initialUsername: string | null
                               onClick={() => setPendingDeleteId(user.id)}
                               className="shrink-0 rounded-xl border border-rose-200 px-3 py-2 text-xs font-semibold text-rose-700 hover:bg-rose-50"
                             >
-                              حذف
+                              سڕینەوە
                             </button>
                           )}
                         </li>
@@ -352,7 +344,7 @@ export function AuthScreen({ initialUsername }: { initialUsername: string | null
             ) : (
               <form onSubmit={onUnlock} className="mt-6 space-y-4">
                 <label className="block text-start">
-                  <span className="mb-2 block text-sm font-medium text-slate-700">رمز الإدارة</span>
+                  <span className="mb-2 block text-sm font-medium text-slate-700">کۆدی بەڕێوەبردن</span>
                   <input
                     value={pin}
                     onChange={(event) => setPin(event.target.value)}
@@ -368,7 +360,7 @@ export function AuthScreen({ initialUsername }: { initialUsername: string | null
                   type="submit"
                   className="h-12 w-full rounded-2xl bg-slate-900 text-sm font-semibold text-white"
                 >
-                  دخول إلى اللوحة
+                  چوونە ناو پانێڵ
                 </button>
               </form>
             )}

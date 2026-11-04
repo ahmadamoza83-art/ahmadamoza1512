@@ -5,7 +5,7 @@ import { getSessionUser } from "@/lib/session";
 function LoadingScreen() {
   return (
     <div className="flex flex-1 items-center justify-center bg-[#eef3f7] text-sm text-slate-500">
-      جارٍ التحميل...
+      باردەکرێت...
     </div>
   );
 }
