@@ -1,10 +1,11 @@
 "use client";
 
-import { useCallback, useEffect, useId, useState, type FormEvent } from "react";
+import { useCallback, useEffect, useId, useState, useSyncExternalStore, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { createUser, deleteUser, listUsers, login, logout } from "@/app/actions";
 import { Dashboard } from "@/app/dashboard";
 import { formatDate } from "@/lib/format-date";
+import { getSessionUser, subscribeSession } from "@/lib/session";
 import type { AppUser } from "@/lib/users";
 
 function FormError({ message }: { message: string }) {
@@ -18,7 +19,9 @@ function FormError({ message }: { message: string }) {
 export function AuthScreen({ initialUsername }: { initialUsername: string | null }) {
   const router = useRouter();
   const titleId = useId();
-  const [username, setUsername] = useState(initialUsername);
+  const storedUsername = useSyncExternalStore(subscribeSession, getSessionUser, () => initialUsername);
+  const [sessionOverride, setSessionOverride] = useState<string | null | undefined>(undefined);
+  const username = sessionOverride === undefined ? storedUsername : sessionOverride;
   const [loginName, setLoginName] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
   const [loginError, setLoginError] = useState("");
@@ -96,14 +99,14 @@ export function AuthScreen({ initialUsername }: { initialUsername: string | null
       setLoginError(result.message);
       return;
     }
-    setUsername(result.username);
+    setSessionOverride(result.username);
     setLoginPassword("");
     router.refresh();
   }
 
   async function onLogout() {
     await logout();
-    setUsername(null);
+    setSessionOverride(null);
     router.refresh();
   }
 

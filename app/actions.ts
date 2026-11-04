@@ -1,7 +1,4 @@
-"use server";
-
-import { timingSafeEqual } from "crypto";
-import { createClient } from "@/lib/supabase/server";
+import { createClient } from "@/lib/supabase/client";
 import { clearSession, getSessionUser, setSession } from "@/lib/session";
 import type { Container, ContainerItem } from "@/lib/containers";
 import type { ItemInput } from "@/lib/item-measure";
@@ -12,16 +9,13 @@ const ADMIN_PIN = "1512";
 
 type AuthError = { message: string; code?: string };
 
-function pinMatches(pin: string) {
-  const given = Buffer.from(pin);
-  const expected = Buffer.from(ADMIN_PIN);
-  return given.length === expected.length && timingSafeEqual(given, expected);
-}
-
-function passwordsMatch(stored: string, given: string) {
-  const left = Buffer.from(stored);
-  const right = Buffer.from(given);
-  return left.length === right.length && timingSafeEqual(left, right);
+function secretsMatch(stored: string, given: string) {
+  if (stored.length !== given.length) return false;
+  let mismatch = 0;
+  for (let index = 0; index < stored.length; index += 1) {
+    mismatch |= stored.charCodeAt(index) ^ given.charCodeAt(index);
+  }
+  return mismatch === 0;
 }
 
 function mapError(error: AuthError) {
@@ -45,7 +39,7 @@ export async function login(username: string, password: string) {
     return { ok: false as const, message: "ناوی بەکارهێنەر و وشەی نهێنی بنووسە." };
   }
 
-  const supabase = await createClient();
+  const supabase = createClient();
   const { data, error } = await supabase
     .from("app_users")
     .select("username, password")
@@ -53,25 +47,25 @@ export async function login(username: string, password: string) {
     .maybeSingle();
 
   if (error) return { ok: false as const, message: mapError(error) };
-  if (!data || !passwordsMatch(String(data.password ?? ""), password)) {
+  if (!data || !secretsMatch(String(data.password ?? ""), password)) {
     return { ok: false as const, message: "ناوی بەکارهێنەر یان وشەی نهێنی هەڵەیە." };
   }
 
-  await setSession(data.username);
+  setSession(data.username);
   return { ok: true as const, username: data.username as string };
 }
 
 export async function logout() {
-  await clearSession();
+  clearSession();
   return { ok: true as const };
 }
 
 export async function listUsers(pin: string) {
-  if (!pinMatches(pin)) {
+  if (!secretsMatch(pin, ADMIN_PIN)) {
     return { ok: false as const, message: "کۆدی بەڕێوەبردن هەڵەیە." };
   }
 
-  const supabase = await createClient();
+  const supabase = createClient();
   const { data, error } = await supabase
     .from("app_users")
     .select("id, username, created_at")
@@ -93,7 +87,7 @@ export async function createUser(
   username: string,
   password: string,
 ) {
-  if (!pinMatches(pin)) {
+  if (!secretsMatch(pin, ADMIN_PIN)) {
     return { ok: false as const, message: "کۆدی بەڕێوەبردن هەڵەیە." };
   }
 
@@ -106,7 +100,7 @@ export async function createUser(
   }
 
   try {
-    const supabase = await createClient();
+    const supabase = createClient();
     const { error } = await supabase.from("app_users").insert({
       username: cleanUsername,
       password,
@@ -120,12 +114,12 @@ export async function createUser(
 }
 
 export async function deleteUser(pin: string, id: string) {
-  if (!pinMatches(pin)) {
+  if (!secretsMatch(pin, ADMIN_PIN)) {
     return { ok: false as const, message: "کۆدی بەڕێوەبردن هەڵەیە." };
   }
 
   try {
-    const supabase = await createClient();
+    const supabase = createClient();
     const { data, error } = await supabase
       .from("app_users")
       .delete()
@@ -251,7 +245,7 @@ function mapItem(item: ItemRow): ContainerItem {
 }
 
 async function requireUser() {
-  const username = await getSessionUser();
+  const username = getSessionUser();
   if (!username) {
     return { ok: false as const, message: "سەرەتا دەبێت بچیتە ژوورەوە." };
   }
@@ -263,7 +257,7 @@ export async function listContainers() {
   if (!session.ok) return session;
 
   try {
-    const supabase = await createClient();
+    const supabase = createClient();
     const { data, error } = await supabase
       .from("containers")
       .select("id, container_number, status, created_at")
@@ -295,7 +289,7 @@ export async function createContainer(containerNumber: string) {
   }
 
   try {
-    const supabase = await createClient();
+    const supabase = createClient();
     const { data, error } = await supabase
       .from("containers")
       .insert({ container_number: cleanNumber })
@@ -323,7 +317,7 @@ export async function listContainerItems(containerId: string) {
   if (!session.ok) return session;
 
   try {
-    const supabase = await createClient();
+    const supabase = createClient();
     const { data, error } = await supabase
       .from("container_items")
       .select("*")
@@ -350,7 +344,7 @@ export async function createContainerItem(containerId: string) {
   }
 
   try {
-    const supabase = await createClient();
+    const supabase = createClient();
     const baseRow = {
       container_id: containerId,
       item_name: "بابەت",
@@ -401,7 +395,7 @@ export async function updateContainerItem(itemId: string, input: ItemInput) {
   });
 
   try {
-    const supabase = await createClient();
+    const supabase = createClient();
     const shared = {
       owner_name: merchant || null,
       quantity,
@@ -445,7 +439,7 @@ export async function deleteContainerItem(itemId: string) {
   if (!session.ok) return session;
 
   try {
-    const supabase = await createClient();
+    const supabase = createClient();
     const { error } = await supabase.from("container_items").delete().eq("id", itemId);
     if (error) return { ok: false as const, message: mapItemError(error) };
     return { ok: true as const };
