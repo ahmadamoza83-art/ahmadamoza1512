@@ -1,15 +1,13 @@
+const supabaseUrlValue = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "";
+const supabasePublishableKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ?? "";
+
 function supabaseUrl() {
-  return (process.env.NEXT_PUBLIC_SUPABASE_URL ?? "")
-    .replace(/\/rest\/v1\/?$/, "")
-    .replace(/\/+$/, "");
+  return supabaseUrlValue.replace(/\/rest\/v1\/?$/, "").replace(/\/+$/, "");
 }
 
 function supabaseKey() {
-  return (
-    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ||
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
-    ""
-  );
+  return supabasePublishableKey || supabaseAnonKey;
 }
 
 export function getSupabaseEnv() {
@@ -18,7 +16,7 @@ export function getSupabaseEnv() {
 
   if (!url || !key) {
     throw new Error(
-      "Missing NEXT_PUBLIC_SUPABASE_URL or a Supabase key. Set NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY or NEXT_PUBLIC_SUPABASE_ANON_KEY in .env.local.",
+      "Missing NEXT_PUBLIC_SUPABASE_URL or NEXT_PUBLIC_SUPABASE_ANON_KEY. These must be available when next build runs.",
     );
   }
 
