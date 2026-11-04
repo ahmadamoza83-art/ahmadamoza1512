@@ -1,10 +1,24 @@
+function supabaseUrl() {
+  return (process.env.NEXT_PUBLIC_SUPABASE_URL ?? "")
+    .replace(/\/rest\/v1\/?$/, "")
+    .replace(/\/+$/, "");
+}
+
+function supabaseKey() {
+  return (
+    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ||
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
+    ""
+  );
+}
+
 export function getSupabaseEnv() {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const key = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
+  const url = supabaseUrl();
+  const key = supabaseKey();
 
   if (!url || !key) {
     throw new Error(
-      "Missing NEXT_PUBLIC_SUPABASE_URL or NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY. Copy .env.example to .env.local and add your Supabase project values.",
+      "Missing NEXT_PUBLIC_SUPABASE_URL or a Supabase key. Set NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY or NEXT_PUBLIC_SUPABASE_ANON_KEY in .env.local.",
     );
   }
 
@@ -12,8 +26,5 @@ export function getSupabaseEnv() {
 }
 
 export function hasSupabaseEnv() {
-  return Boolean(
-    process.env.NEXT_PUBLIC_SUPABASE_URL &&
-      process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY,
-  );
+  return Boolean(supabaseUrl() && supabaseKey());
 }
