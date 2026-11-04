@@ -93,15 +93,21 @@ export function AuthScreen({ initialUsername }: { initialUsername: string | null
     event.preventDefault();
     setLoginPending(true);
     setLoginError("");
-    const result = await login(loginName, loginPassword);
-    setLoginPending(false);
-    if (!result.ok) {
-      setLoginError(result.message);
-      return;
+    try {
+      const result = await login(loginName, loginPassword);
+      setLoginPending(false);
+      if (!result.ok) {
+        setLoginError(result.message);
+        return;
+      }
+      setSessionOverride(result.username);
+      setLoginPassword("");
+      router.refresh();
+    } catch (error) {
+      console.error("Login failed:", error);
+      setLoginPending(false);
+      setLoginError(error instanceof Error ? error.message : "کردارەکە سەرنەکەوت. دووبارە هەوڵبدەرەوە.");
     }
-    setSessionOverride(result.username);
-    setLoginPassword("");
-    router.refresh();
   }
 
   async function onLogout() {

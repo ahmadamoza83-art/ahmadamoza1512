@@ -32,6 +32,19 @@ function mapError(error: AuthError) {
   return "کردارەکە سەرنەکەوت. دووبارە هەوڵبدەرەوە.";
 }
 
+function describeLoginError(error: unknown) {
+  console.error("Login failed:", error);
+
+  if (error && typeof error === "object" && "message" in error) {
+    const message = String(error.message ?? "").trim();
+    if (message) return message;
+  }
+
+  if (error instanceof Error && error.message.trim()) return error.message;
+
+  return "کردارەکە سەرنەکەوت. دووبارە هەوڵبدەرەوە.";
+}
+
 export async function login(username: string, password: string) {
   const cleanUsername = username.trim();
 
@@ -39,20 +52,24 @@ export async function login(username: string, password: string) {
     return { ok: false as const, message: "ناوی بەکارهێنەر و وشەی نهێنی بنووسە." };
   }
 
-  const supabase = createClient();
-  const { data, error } = await supabase
-    .from("app_users")
-    .select("username, password")
-    .eq("username", cleanUsername)
-    .maybeSingle();
+  try {
+    const supabase = createClient();
+    const { data, error } = await supabase
+      .from("app_users")
+      .select("username, password")
+      .eq("username", cleanUsername)
+      .maybeSingle();
 
-  if (error) return { ok: false as const, message: mapError(error) };
-  if (!data || !secretsMatch(String(data.password ?? ""), password)) {
-    return { ok: false as const, message: "ناوی بەکارهێنەر یان وشەی نهێنی هەڵەیە." };
+    if (error) return { ok: false as const, message: describeLoginError(error) };
+    if (!data || !secretsMatch(String(data.password ?? ""), password)) {
+      return { ok: false as const, message: "ناوی بەکارهێنەر یان وشەی نهێنی هەڵەیە." };
+    }
+
+    setSession(data.username);
+    return { ok: true as const, username: data.username as string };
+  } catch (error) {
+    return { ok: false as const, message: describeLoginError(error) };
   }
-
-  setSession(data.username);
-  return { ok: true as const, username: data.username as string };
 }
 
 export async function logout() {
