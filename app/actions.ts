@@ -4,6 +4,8 @@ import { timingSafeEqual } from "crypto";
 import { createClient } from "@/lib/supabase/server";
 import { clearSession, getSessionUser, setSession } from "@/lib/session";
 import type { Container, ContainerItem } from "@/lib/containers";
+import type { ItemInput } from "@/lib/item-measure";
+import { lineMeasurement } from "@/lib/item-measure";
 import type { AppUser } from "@/lib/users";
 
 const ADMIN_PIN = "1512";
@@ -140,6 +142,14 @@ export async function deleteUser(pin: string, id: string) {
   }
 }
 
+const itemColumns =
+  "id, container_id, item_name, quantity, weight_kg, cbm, owner_name, created_at, width, length, height, notes";
+const basicItemColumns =
+  "id, container_id, item_name, quantity, weight_kg, cbm, owner_name, created_at";
+const packedPrefix = "amz1:";
+
+let hasMeasurementColumns: boolean | null = null;
+
 function mapContainerError(error: AuthError) {
   const message = error.message ?? "";
 
@@ -152,6 +162,94 @@ function mapContainerError(error: AuthError) {
   }
 
   return "کردارەکە سەرنەکەوت. دووبارە هەوڵبدەرەوە.";
+}
+
+function isMissingColumn(error: AuthError) {
+  const message = error.message ?? "";
+  return (
+    error.code === "42703" ||
+    error.code === "PGRST204" ||
+    message.includes("schema cache") ||
+    message.includes("Could not find")
+  );
+}
+
+function mapItemError(error: AuthError) {
+  const message = error.message ?? "";
+
+  if (message.includes("row-level security")) {
+    return "نەتوانرا ماددەکان دەستکاری بکرێن. مۆڵەتی خشتەکە ڕێگە بەم کردارە نادات.";
+  }
+
+  return "پاشەکەوتکردن سەرنەکەوت. دووبارە هەوڵبدەرەوە.";
+}
+
+function packItem(value: {
+  merchant: string;
+  width: number | null;
+  length: number | null;
+  height: number | null;
+  notes: string;
+}) {
+  return packedPrefix + JSON.stringify(value);
+}
+
+function unpackItem(itemName: string) {
+  if (!itemName.startsWith(packedPrefix)) return null;
+  try {
+    const value = JSON.parse(itemName.slice(packedPrefix.length)) as {
+      merchant?: unknown;
+      width?: unknown;
+      length?: unknown;
+      height?: unknown;
+      notes?: unknown;
+    };
+    return {
+      merchant: typeof value.merchant === "string" ? value.merchant : "",
+      width: typeof value.width === "number" ? value.width : null,
+      length: typeof value.length === "number" ? value.length : null,
+      height: typeof value.height === "number" ? value.height : null,
+      notes: typeof value.notes === "string" ? value.notes : "",
+    };
+  } catch {
+    return null;
+  }
+}
+
+function mapItem(item: {
+  id: unknown;
+  container_id: unknown;
+  item_name: string;
+  quantity: number | string | null;
+  weight_kg: number | string | null;
+  cbm: number | string | null;
+  owner_name: string | null;
+  width?: number | string | null;
+  length?: number | string | null;
+  height?: number | string | null;
+  notes?: string | null;
+  created_at: string;
+}): ContainerItem {
+  const packed = unpackItem(item.item_name ?? "");
+  const width = measureOrNull(item.width) ?? packed?.width ?? null;
+  const length = measureOrNull(item.length) ?? packed?.length ?? null;
+  const height = measureOrNull(item.height) ?? packed?.height ?? null;
+  const merchant = item.owner_name || packed?.merchant || null;
+
+  return {
+    id: String(item.id),
+    container_id: String(item.container_id),
+    item_name: merchant || item.item_name,
+    quantity: Number(item.quantity ?? 0),
+    weight_kg: item.weight_kg === null ? null : Number(item.weight_kg),
+    cbm: item.cbm === null ? null : Number(item.cbm),
+    owner_name: merchant,
+    width,
+    length,
+    height,
+    notes: item.notes || packed?.notes || null,
+    created_at: item.created_at,
+  };
 }
 
 async function requireUser() {
@@ -228,28 +326,156 @@ export async function listContainerItems(containerId: string) {
 
   try {
     const supabase = await createClient();
+    const columns = hasMeasurementColumns === false ? basicItemColumns : itemColumns;
     const { data, error } = await supabase
       .from("container_items")
-      .select("id, container_id, item_name, quantity, weight_kg, cbm, owner_name, created_at")
+      .select(columns)
       .eq("container_id", containerId)
-      .order("created_at", { ascending: false });
+      .order("created_at", { ascending: true });
 
-    if (error) return { ok: false as const, message: mapContainerError(error) };
+    if (error && hasMeasurementColumns !== false && isMissingColumn(error)) {
+      hasMeasurementColumns = false;
+      const fallback = await supabase
+        .from("container_items")
+        .select(basicItemColumns)
+        .eq("container_id", containerId)
+        .order("created_at", { ascending: true });
+      if (fallback.error) return { ok: false as const, message: mapItemError(fallback.error) };
+      return { ok: true as const, items: (fallback.data ?? []).map((item) => mapItem(item)) };
+    }
+
+    if (error) return { ok: false as const, message: mapItemError(error) };
+    if (hasMeasurementColumns === null) hasMeasurementColumns = true;
 
     return {
       ok: true as const,
-      items: (data ?? []).map((item) => ({
-        id: String(item.id),
-        container_id: String(item.container_id),
-        item_name: item.item_name,
-        quantity: Number(item.quantity ?? 0),
-        weight_kg: item.weight_kg === null ? null : Number(item.weight_kg),
-        cbm: item.cbm === null ? null : Number(item.cbm),
-        owner_name: item.owner_name,
-        created_at: item.created_at,
-      })) as ContainerItem[],
+      items: (data ?? []).map((item) => mapItem(item)),
     };
   } catch {
     return { ok: false as const, message: "پەیوەندی بە بنکەی زانیارییەوە سەرنەکەوت. دووبارە هەوڵبدەرەوە." };
   }
+}
+
+export async function createContainerItem(containerId: string) {
+  const session = await requireUser();
+  if (!session.ok) return session;
+
+  if (!containerId) {
+    return { ok: false as const, message: "کۆنتێنەرەکە نەدۆزرایەوە." };
+  }
+
+  try {
+    const supabase = await createClient();
+    const baseRow = {
+      container_id: containerId,
+      item_name: "بابەت",
+      quantity: 0,
+      owner_name: null,
+      cbm: 0,
+    };
+    const inserted =
+      hasMeasurementColumns === false
+        ? await supabase.from("container_items").insert(baseRow).select(basicItemColumns).single()
+        : await supabase
+            .from("container_items")
+            .insert({ ...baseRow, width: null, length: null, height: null, notes: null })
+            .select(itemColumns)
+            .single();
+
+    if (inserted.error && hasMeasurementColumns !== false && isMissingColumn(inserted.error)) {
+      hasMeasurementColumns = false;
+      const fallback = await supabase.from("container_items").insert(baseRow).select(basicItemColumns).single();
+      if (fallback.error) return { ok: false as const, message: mapItemError(fallback.error) };
+      return { ok: true as const, item: mapItem(fallback.data) };
+    }
+
+    if (inserted.error) return { ok: false as const, message: mapItemError(inserted.error) };
+    if (hasMeasurementColumns === null) hasMeasurementColumns = true;
+
+    return { ok: true as const, item: mapItem(inserted.data) };
+  } catch {
+    return { ok: false as const, message: "پەیوەندی بە بنکەی زانیارییەوە سەرنەکەوت. دووبارە هەوڵبدەرەوە." };
+  }
+}
+
+export async function updateContainerItem(itemId: string, input: ItemInput) {
+  const session = await requireUser();
+  if (!session.ok) return session;
+
+  const merchant = input.merchant.trim().slice(0, 120);
+  const notes = input.notes.trim().slice(0, 500);
+  const width = cleanMeasure(input.width);
+  const length = cleanMeasure(input.length);
+  const height = cleanMeasure(input.height);
+  const quantity = cleanMeasure(input.quantity) ?? 0;
+  const total = lineMeasurement({
+    width: width === null ? "" : String(width),
+    length: length === null ? "" : String(length),
+    height: height === null ? "" : String(height),
+    quantity: String(quantity),
+  });
+
+  try {
+    const supabase = await createClient();
+    const shared = {
+      owner_name: merchant || null,
+      quantity,
+      cbm: total,
+    };
+    const packedRow = {
+      ...shared,
+      item_name: packItem({ merchant, width, length, height, notes }),
+    };
+    const measuredRow = {
+      ...shared,
+      item_name: merchant || "بابەت",
+      width,
+      length,
+      height,
+      notes: notes || null,
+    };
+
+    const updated =
+      hasMeasurementColumns === false
+        ? await supabase.from("container_items").update(packedRow).eq("id", itemId)
+        : await supabase.from("container_items").update(measuredRow).eq("id", itemId);
+
+    if (updated.error && hasMeasurementColumns !== false && isMissingColumn(updated.error)) {
+      hasMeasurementColumns = false;
+      const fallback = await supabase.from("container_items").update(packedRow).eq("id", itemId);
+      if (fallback.error) return { ok: false as const, message: mapItemError(fallback.error) };
+      return { ok: true as const };
+    }
+
+    if (updated.error) return { ok: false as const, message: mapItemError(updated.error) };
+    if (hasMeasurementColumns === null) hasMeasurementColumns = true;
+    return { ok: true as const };
+  } catch {
+    return { ok: false as const, message: "پەیوەندی بە بنکەی زانیارییەوە سەرنەکەوت. دووبارە هەوڵبدەرەوە." };
+  }
+}
+
+export async function deleteContainerItem(itemId: string) {
+  const session = await requireUser();
+  if (!session.ok) return session;
+
+  try {
+    const supabase = await createClient();
+    const { error } = await supabase.from("container_items").delete().eq("id", itemId);
+    if (error) return { ok: false as const, message: mapItemError(error) };
+    return { ok: true as const };
+  } catch {
+    return { ok: false as const, message: "پەیوەندی بە بنکەی زانیارییەوە سەرنەکەوت. دووبارە هەوڵبدەرەوە." };
+  }
+}
+
+function measureOrNull(value: number | string | null | undefined) {
+  if (value === null || value === undefined || value === "") return null;
+  const number = Number(value);
+  return Number.isFinite(number) ? number : null;
+}
+
+function cleanMeasure(value: number | null) {
+  if (value === null || !Number.isFinite(value) || value < 0 || value > 1_000_000_000) return null;
+  return value;
 }

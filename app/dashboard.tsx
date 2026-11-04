@@ -2,6 +2,7 @@
 
 import { useEffect, useId, useState, type FormEvent } from "react";
 import { createContainer, listContainerItems, listContainers } from "@/app/actions";
+import { ItemsTable } from "@/app/items-table";
 import type { Container, ContainerItem } from "@/lib/containers";
 import { HistoryCalendar } from "@/app/history-calendar";
 import { dayKey, formatDate, formatDayLabel } from "@/lib/format-date";
@@ -26,6 +27,7 @@ export function Dashboard({
   const [loading, setLoading] = useState(true);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [items, setItems] = useState<ContainerItem[]>([]);
+  const [itemsVersion, setItemsVersion] = useState(0);
   const [itemsError, setItemsError] = useState("");
   const [itemsLoading, setItemsLoading] = useState(false);
 
@@ -81,6 +83,7 @@ export function Dashboard({
     if (!matches.some((container) => container.id === selectedId)) {
       setSelectedId(null);
       setItems([]);
+      setItemsVersion((version) => version + 1);
       setItemsError("");
     }
   }
@@ -93,10 +96,12 @@ export function Dashboard({
     setItemsLoading(false);
     if (!result.ok) {
       setItems([]);
+      setItemsVersion((version) => version + 1);
       setItemsError(result.message);
       return;
     }
     setItems(result.items);
+    setItemsVersion((version) => version + 1);
   }
 
   async function onAdd(event: FormEvent) {
@@ -118,7 +123,7 @@ export function Dashboard({
   return (
     <div className="min-h-full flex-1 bg-slate-950 text-white">
       <header className="border-b border-white/10">
-        <div className="mx-auto flex w-full max-w-6xl items-center justify-between gap-4 px-4 py-5 sm:px-6">
+        <div className="mx-auto flex w-full max-w-7xl items-center justify-between gap-4 px-4 py-5 sm:px-6">
           <div className="min-w-0 text-start">
             <p className="text-sm text-slate-400">بەخێربێیت، {username}</p>
             <h1 className="truncate text-2xl font-bold">کۆنتێنەرەکان</h1>
@@ -131,7 +136,7 @@ export function Dashboard({
             دەرچوون
           </button>
         </div>
-        <div className="mx-auto flex w-full max-w-6xl gap-2 px-4 pb-5 sm:px-6">
+        <div className="mx-auto flex w-full max-w-7xl gap-2 px-4 pb-5 sm:px-6">
           <button
             type="button"
             onClick={() => setView("containers")}
@@ -153,7 +158,8 @@ export function Dashboard({
         </div>
       </header>
 
-      <main className="mx-auto grid w-full max-w-6xl gap-6 px-4 py-6 sm:px-6 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]">
+      <main className="mx-auto flex w-full max-w-7xl flex-col gap-6 px-4 py-6 sm:px-6">
+        <div className={`grid gap-6 ${selected ? "" : "lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]"}`}>
         <section className="rounded-3xl border border-white/10 bg-slate-900 p-5">
           <div className="mb-5 flex items-center justify-between gap-3">
             <div className="text-start">
@@ -276,46 +282,38 @@ export function Dashboard({
           )}
         </section>
 
-        <section className="rounded-3xl border border-white/10 bg-slate-900 p-5">
-          <h2 className="text-lg font-semibold">ماددەکانی کۆنتێنەر</h2>
-          {selected ? (
-            <p className="mt-1 text-sm text-slate-400">{selected.container_number}</p>
-          ) : (
+        {selected ? null : (
+          <section className="rounded-3xl border border-white/10 bg-slate-900 p-5">
+            <h2 className="text-lg font-semibold">ماددەکانی کۆنتێنەر</h2>
             <p className="mt-1 text-sm text-slate-400">
               {view === "history" && !selectedDay
                 ? "سەرەتا ڕۆژێک لە ڕۆژژمێرەکە هەڵبژێرە."
                 : "کۆنتێنەرێک هەڵبژێرە بۆ بینینی ماددەکانی."}
             </p>
-          )}
+          </section>
+        )}
+        </div>
 
-          {itemsError ? (
-            <p role="alert" className="mt-4 rounded-2xl bg-rose-500/10 px-4 py-3 text-sm text-rose-200">
-              {itemsError}
-            </p>
-          ) : null}
-
-          {!selected ? null : itemsLoading ? (
-            <p className="py-10 text-center text-sm text-slate-400">باردەکرێت...</p>
-          ) : items.length === 0 ? (
-            <p className="mt-5 rounded-2xl border border-dashed border-white/15 px-4 py-10 text-center text-sm text-slate-400">
-              هیچ ماددەیەک لە ناو ئەم کۆنتێنەرەدا نییە.
-            </p>
-          ) : (
-            <ul className="mt-5 divide-y divide-white/10">
-              {items.map((item) => (
-                <li key={item.id} className="py-4 text-start">
-                  <p className="font-medium">{item.item_name}</p>
-                  <p className="mt-1 text-sm text-slate-400">
-                    بڕ {item.quantity}
-                    {item.weight_kg !== null ? ` · کێش ${item.weight_kg} کگم` : ""}
-                    {item.cbm !== null ? ` · قەبارە ${item.cbm}` : ""}
-                    {item.owner_name ? ` · ${item.owner_name}` : ""}
-                  </p>
-                </li>
-              ))}
-            </ul>
-          )}
-        </section>
+        {selected ? (
+          <section className="rounded-3xl border border-white/10 bg-slate-900 p-5">
+            <h2 className="text-lg font-semibold">ماددەکانی کۆنتێنەر</h2>
+            <p className="mt-1 text-sm text-slate-400">{selected.container_number}</p>
+            {itemsError ? (
+              <p role="alert" className="mt-4 rounded-2xl bg-rose-500/10 px-4 py-3 text-sm text-rose-200">
+                {itemsError}
+              </p>
+            ) : null}
+            {itemsLoading ? (
+              <p className="py-10 text-center text-sm text-slate-400">باردەکرێت...</p>
+            ) : itemsError ? null : (
+              <ItemsTable
+                key={`${selected.id}:${itemsVersion}`}
+                containerId={selected.id}
+                items={items}
+              />
+            )}
+          </section>
+        ) : null}
       </main>
 
       {addOpen ? (

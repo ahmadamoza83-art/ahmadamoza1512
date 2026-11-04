@@ -13,5 +13,9 @@ export type ContainerItem = {
   weight_kg: number | null;
   cbm: number | null;
   owner_name: string | null;
+  width: number | null;
+  length: number | null;
+  height: number | null;
+  notes: string | null;
   created_at: string;
 };
