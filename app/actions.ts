@@ -142,10 +142,6 @@ export async function deleteUser(pin: string, id: string) {
   }
 }
 
-const itemColumns =
-  "id, container_id, item_name, quantity, weight_kg, cbm, owner_name, created_at, width, length, height, notes";
-const basicItemColumns =
-  "id, container_id, item_name, quantity, weight_kg, cbm, owner_name, created_at";
 const packedPrefix = "amz1:";
 
 let hasMeasurementColumns: boolean | null = null;
@@ -216,7 +212,7 @@ function unpackItem(itemName: string) {
   }
 }
 
-function mapItem(item: {
+type ItemRow = {
   id: unknown;
   container_id: unknown;
   item_name: string;
@@ -229,7 +225,9 @@ function mapItem(item: {
   height?: number | string | null;
   notes?: string | null;
   created_at: string;
-}): ContainerItem {
+};
+
+function mapItem(item: ItemRow): ContainerItem {
   const packed = unpackItem(item.item_name ?? "");
   const width = measureOrNull(item.width) ?? packed?.width ?? null;
   const length = measureOrNull(item.length) ?? packed?.length ?? null;
@@ -326,30 +324,17 @@ export async function listContainerItems(containerId: string) {
 
   try {
     const supabase = await createClient();
-    const columns = hasMeasurementColumns === false ? basicItemColumns : itemColumns;
     const { data, error } = await supabase
       .from("container_items")
-      .select(columns)
+      .select("*")
       .eq("container_id", containerId)
       .order("created_at", { ascending: true });
 
-    if (error && hasMeasurementColumns !== false && isMissingColumn(error)) {
-      hasMeasurementColumns = false;
-      const fallback = await supabase
-        .from("container_items")
-        .select(basicItemColumns)
-        .eq("container_id", containerId)
-        .order("created_at", { ascending: true });
-      if (fallback.error) return { ok: false as const, message: mapItemError(fallback.error) };
-      return { ok: true as const, items: (fallback.data ?? []).map((item) => mapItem(item)) };
-    }
-
     if (error) return { ok: false as const, message: mapItemError(error) };
-    if (hasMeasurementColumns === null) hasMeasurementColumns = true;
 
     return {
       ok: true as const,
-      items: (data ?? []).map((item) => mapItem(item)),
+      items: ((data ?? []) as ItemRow[]).map((item) => mapItem(item)),
     };
   } catch {
     return { ok: false as const, message: "پەیوەندی بە بنکەی زانیارییەوە سەرنەکەوت. دووبارە هەوڵبدەرەوە." };
@@ -375,24 +360,24 @@ export async function createContainerItem(containerId: string) {
     };
     const inserted =
       hasMeasurementColumns === false
-        ? await supabase.from("container_items").insert(baseRow).select(basicItemColumns).single()
+        ? await supabase.from("container_items").insert(baseRow).select("*").single()
         : await supabase
             .from("container_items")
             .insert({ ...baseRow, width: null, length: null, height: null, notes: null })
-            .select(itemColumns)
+            .select("*")
             .single();
 
     if (inserted.error && hasMeasurementColumns !== false && isMissingColumn(inserted.error)) {
       hasMeasurementColumns = false;
-      const fallback = await supabase.from("container_items").insert(baseRow).select(basicItemColumns).single();
+      const fallback = await supabase.from("container_items").insert(baseRow).select("*").single();
       if (fallback.error) return { ok: false as const, message: mapItemError(fallback.error) };
-      return { ok: true as const, item: mapItem(fallback.data) };
+      return { ok: true as const, item: mapItem(fallback.data as ItemRow) };
     }
 
     if (inserted.error) return { ok: false as const, message: mapItemError(inserted.error) };
     if (hasMeasurementColumns === null) hasMeasurementColumns = true;
 
-    return { ok: true as const, item: mapItem(inserted.data) };
+    return { ok: true as const, item: mapItem(inserted.data as ItemRow) };
   } catch {
     return { ok: false as const, message: "پەیوەندی بە بنکەی زانیارییەوە سەرنەکەوت. دووبارە هەوڵبدەرەوە." };
   }
