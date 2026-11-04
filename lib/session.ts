@@ -1,5 +1,6 @@
 import { createHmac, timingSafeEqual } from "crypto";
 import { cookies } from "next/headers";
+import { connection } from "next/server";
 
 const COOKIE = "app_user_session";
 const MAX_AGE = 60 * 60 * 24 * 7;
@@ -19,6 +20,7 @@ function safeEqual(a: string, b: string) {
 }
 
 export async function getSessionUser() {
+  await connection();
   const cookieStore = await cookies();
   const raw = cookieStore.get(COOKIE)?.value;
   if (!raw) return null;

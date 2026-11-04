@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useId, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { createUser, deleteUser, listUsers, login, logout } from "@/app/actions";
+import { Dashboard } from "@/app/dashboard";
 import type { AppUser } from "@/lib/users";
 
 function FormError({ message }: { message: string }) {
@@ -155,28 +156,16 @@ export function AuthScreen({ initialUsername }: { initialUsername: string | null
     await refreshUsers(unlockedPin);
   }
 
+  if (username) {
+    return <Dashboard username={username} onLogout={() => void onLogout()} />;
+  }
+
   return (
     <div className="relative flex flex-1 items-center justify-center overflow-hidden bg-[#eef3f7] px-4 py-10">
       <div className="pointer-events-none absolute -top-24 left-1/2 h-72 w-72 -translate-x-1/2 rounded-full bg-teal-200/70 blur-3xl" />
       <div className="pointer-events-none absolute bottom-0 end-0 h-56 w-56 rounded-full bg-sky-200/60 blur-3xl" />
 
       <main className="relative w-full max-w-md rounded-3xl border border-white/80 bg-white p-6 shadow-[0_24px_80px_-32px_rgba(15,23,42,0.45)] sm:p-8">
-        {username ? (
-          <section className="text-center">
-            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-teal-700 text-2xl font-bold text-white">
-              {username.slice(0, 1)}
-            </div>
-            <h1 className="mt-5 text-2xl font-bold text-slate-900">مرحباً، {username}</h1>
-            <p className="mt-2 text-sm leading-6 text-slate-500">تم تسجيل دخولك بنجاح.</p>
-            <button
-              type="button"
-              onClick={onLogout}
-              className="mt-8 h-12 w-full rounded-2xl bg-slate-900 text-sm font-semibold text-white transition hover:bg-slate-700"
-            >
-              تسجيل الخروج
-            </button>
-          </section>
-        ) : (
           <section>
             <div className="mb-8 text-center">
               <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-900 text-white">
@@ -238,7 +227,6 @@ export function AuthScreen({ initialUsername }: { initialUsername: string | null
               لوحة الإدارة
             </button>
           </section>
-        )}
       </main>
 
       {adminOpen ? (
