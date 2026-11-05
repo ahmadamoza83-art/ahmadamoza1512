@@ -35,3 +35,47 @@ body {
   color: #94a3b8;
   -webkit-text-fill-color: #94a3b8;
 }
+
+@media print {
+  @page {
+    margin: 12mm;
+  }
+
+  html,
+  body,
+  .sheet-root {
+    background: #fff !important;
+    color: #111 !important;
+  }
+
+  .sheet-root,
+  .sheet-root * {
+    background: transparent !important;
+    color: #111 !important;
+    -webkit-text-fill-color: #111 !important;
+    box-shadow: none !important;
+    text-shadow: none !important;
+  }
+
+  .sheet-root .item-card,
+  .sheet-root section,
+  .sheet-root input,
+  .sheet-root header {
+    background: #fff !important;
+    border-color: #d1d5db !important;
+  }
+
+  .sheet-root .item-card {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .sheet-root input {
+    border: 1px solid #d1d5db !important;
+  }
+
+  .no-print,
+  nextjs-portal {
+    display: none !important;
+  }
+}

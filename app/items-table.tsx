@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { createContainerItem, deleteContainerItem, updateContainerItem } from "@/app/actions";
 import type { ContainerItem } from "@/lib/containers";
 import {
@@ -12,9 +12,7 @@ import {
 } from "@/lib/item-measure";
 
 const fieldClass =
-  "admin-field h-7 w-full rounded border border-slate-700 bg-slate-800 px-1 text-[11px] leading-none text-white caret-white outline-none placeholder:text-slate-500 focus:border-emerald-400";
-const headClass = "whitespace-nowrap border border-white/10 px-1 py-1 text-center font-medium";
-const cellClass = "border border-white/10 p-1 align-middle";
+  "admin-field h-10 w-full rounded-xl border border-slate-700 bg-slate-950 px-3 text-sm text-white caret-white outline-none placeholder:text-slate-500 focus:border-emerald-400";
 
 export function ItemsTable({
   containerId,
@@ -60,16 +58,25 @@ export function ItemsTable({
 
   return (
     <div className="mt-5">
-      <div className="mb-4 flex flex-col items-stretch gap-3 sm:flex-row sm:items-center sm:justify-between">
+      <div className="no-print mb-4 flex flex-col items-stretch gap-3 sm:flex-row sm:items-center sm:justify-between">
         <p className="text-start text-sm leading-6 text-slate-400">گۆڕانکارییەکان خۆکارانە پاشەکەوت دەکرێن.</p>
-        <button
-          type="button"
-          onClick={() => void addRow()}
-          disabled={adding}
-          className="h-10 w-full shrink-0 rounded-2xl bg-emerald-600 px-4 text-sm font-semibold text-white transition hover:bg-emerald-500 disabled:opacity-60 sm:w-auto"
-        >
-          {adding ? "خەریکە زیاد دەکرێت..." : "زیادکردنی ڕیز"}
-        </button>
+        <div className="flex flex-col gap-2 sm:flex-row">
+          <button
+            type="button"
+            onClick={() => window.print()}
+            className="h-10 w-full shrink-0 rounded-2xl border border-white/10 px-4 text-sm font-semibold text-slate-200 transition hover:bg-white/5 sm:w-auto"
+          >
+            چاپکردن
+          </button>
+          <button
+            type="button"
+            onClick={() => void addRow()}
+            disabled={adding}
+            className="h-10 w-full shrink-0 rounded-2xl bg-emerald-600 px-4 text-sm font-semibold text-white transition hover:bg-emerald-500 disabled:opacity-60 sm:w-auto"
+          >
+            {adding ? "خەریکە زیاد دەکرێت..." : "زیادکردنی ڕیز"}
+          </button>
+        </div>
       </div>
 
       {tableError ? (
@@ -78,50 +85,32 @@ export function ItemsTable({
         </p>
       ) : null}
 
-      <div className="max-w-full overflow-x-auto rounded-xl border border-white/10">
-        <table className="w-max min-w-full border-collapse text-start text-[11px]">
-          <thead>
-            <tr className="bg-slate-950 text-[10px] text-slate-300">
-              <th className={`${headClass} min-w-[6.5rem]`}>ناوی بازرگان</th>
-              <th className={`${headClass} w-14`}>پانی</th>
-              <th className={`${headClass} w-14`}>درێژی</th>
-              <th className={`${headClass} w-14`}>بەرزی</th>
-              <th className={`${headClass} w-14`}>عدد</th>
-              <th className={`${headClass} min-w-[5.5rem]`}>تێبینی</th>
-              <th className={`${headClass} min-w-[5.5rem]`}>کۆی گشتی یەک بابەت</th>
-              <th className={`${headClass} w-14`}>سڕینەوە</th>
-            </tr>
-          </thead>
-          <tbody>
-            {rows.length === 0 ? (
-              <tr>
-                <td colSpan={8} className="px-1 py-6 text-center text-[11px] text-slate-400">
-                  هیچ ماددەیەک لە ناو ئەم کۆنتێنەرەدا نییە.
-                </td>
-              </tr>
-            ) : (
-              rows.map((row) => (
-                <ItemRow
-                  key={row.id}
-                  row={row}
-                  autoFocus={row.id === focusId}
-                  onChange={updateRow}
-                  onDelete={() => void removeRow(row.id)}
-                />
-              ))
-            )}
-          </tbody>
-        </table>
+      <div className="flex flex-col gap-3">
+        {rows.length === 0 ? (
+          <p className="item-card rounded-2xl border border-dashed border-white/15 px-4 py-8 text-center text-sm text-slate-400">
+            هیچ ماددەیەک لە ناو ئەم کۆنتێنەرەدا نییە.
+          </p>
+        ) : (
+          rows.map((row) => (
+            <ItemRow
+              key={row.id}
+              row={row}
+              autoFocus={row.id === focusId}
+              onChange={updateRow}
+              onDelete={() => void removeRow(row.id)}
+            />
+          ))
+        )}
       </div>
 
-      <div className="mt-4 flex flex-col gap-3 sm:grid sm:grid-cols-2">
-        <div className="rounded-2xl border border-white/10 bg-slate-950 px-4 py-3 text-start">
-          <p className="text-sm text-slate-400">کۆی گشتی عددی هەموو تاجرەکان</p>
-          <p className="mt-1 text-xl font-semibold text-emerald-400">{formatMeasurement(quantityTotal)}</p>
+      <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
+        <div className="item-card rounded-2xl border border-white/10 bg-slate-950 px-4 py-3 text-start">
+          <p className="text-xs text-slate-400">کۆی گشتی عددی هەموو تاجرەکان</p>
+          <p className="mt-1 text-2xl font-semibold tabular-nums text-emerald-400">{formatMeasurement(quantityTotal)}</p>
         </div>
-        <div className="rounded-2xl border border-white/10 bg-slate-950 px-4 py-3 text-start">
-          <p className="text-sm text-slate-400">کۆی گشتی قیاسی هەموو تاجرەکان</p>
-          <p className="mt-1 text-xl font-semibold text-emerald-400">{formatMeasurement(measurementTotal)}</p>
+        <div className="item-card rounded-2xl border border-white/10 bg-slate-950 px-4 py-3 text-start">
+          <p className="text-xs text-slate-400">کۆی گشتی قیاسی هەموو تاجرەکان</p>
+          <p className="mt-1 text-2xl font-semibold tabular-nums text-emerald-400">{formatMeasurement(measurementTotal)}</p>
         </div>
       </div>
     </div>
@@ -226,8 +215,9 @@ function ItemRow({
   const total = lineMeasurement(row);
 
   return (
-    <tr>
-      <td className={cellClass}>
+    <article className="item-card rounded-2xl border border-white/10 bg-slate-950 p-4">
+      <label className="block text-start">
+        <span className="mb-1 block text-xs font-medium text-slate-400">ناوی بازرگان</span>
         <input
           ref={merchantRef}
           value={row.merchant}
@@ -236,52 +226,57 @@ function ItemRow({
           placeholder="ناوی بازرگان"
           className={fieldClass}
         />
-      </td>
-      <td className={cellClass}>
-        <input
-          value={row.width}
-          onChange={(event) => edit({ width: event.target.value })}
-          onBlur={flush}
-          inputMode="decimal"
-          dir="ltr"
-          placeholder="0"
-          className={`${fieldClass} text-center tabular-nums`}
-        />
-      </td>
-      <td className={cellClass}>
-        <input
-          value={row.length}
-          onChange={(event) => edit({ length: event.target.value })}
-          onBlur={flush}
-          inputMode="decimal"
-          dir="ltr"
-          placeholder="0"
-          className={`${fieldClass} text-center tabular-nums`}
-        />
-      </td>
-      <td className={cellClass}>
-        <input
-          value={row.height}
-          onChange={(event) => edit({ height: event.target.value })}
-          onBlur={flush}
-          inputMode="decimal"
-          dir="ltr"
-          placeholder="0"
-          className={`${fieldClass} text-center tabular-nums`}
-        />
-      </td>
-      <td className={cellClass}>
-        <input
-          value={row.quantity}
-          onChange={(event) => edit({ quantity: event.target.value })}
-          onBlur={flush}
-          inputMode="decimal"
-          dir="ltr"
-          placeholder="0"
-          className={`${fieldClass} text-center tabular-nums`}
-        />
-      </td>
-      <td className={cellClass}>
+      </label>
+
+      <div className="mt-3 grid grid-cols-2 gap-2">
+        <MetricField label="پانی">
+          <input
+            value={row.width}
+            onChange={(event) => edit({ width: event.target.value })}
+            onBlur={flush}
+            inputMode="decimal"
+            dir="ltr"
+            placeholder="0"
+            className={`${fieldClass} text-center tabular-nums`}
+          />
+        </MetricField>
+        <MetricField label="درێژی">
+          <input
+            value={row.length}
+            onChange={(event) => edit({ length: event.target.value })}
+            onBlur={flush}
+            inputMode="decimal"
+            dir="ltr"
+            placeholder="0"
+            className={`${fieldClass} text-center tabular-nums`}
+          />
+        </MetricField>
+        <MetricField label="بەرزی">
+          <input
+            value={row.height}
+            onChange={(event) => edit({ height: event.target.value })}
+            onBlur={flush}
+            inputMode="decimal"
+            dir="ltr"
+            placeholder="0"
+            className={`${fieldClass} text-center tabular-nums`}
+          />
+        </MetricField>
+        <MetricField label="عدد">
+          <input
+            value={row.quantity}
+            onChange={(event) => edit({ quantity: event.target.value })}
+            onBlur={flush}
+            inputMode="decimal"
+            dir="ltr"
+            placeholder="0"
+            className={`${fieldClass} text-center tabular-nums`}
+          />
+        </MetricField>
+      </div>
+
+      <label className="mt-3 block text-start">
+        <span className="mb-1 block text-xs font-medium text-slate-400">تێبینی</span>
         <input
           value={row.notes}
           onChange={(event) => edit({ notes: event.target.value })}
@@ -289,27 +284,37 @@ function ItemRow({
           placeholder="تێبینی"
           className={fieldClass}
         />
-      </td>
-      <td className={`${cellClass} text-center`}>
-        <div className="px-1 text-[11px] font-semibold tabular-nums text-emerald-400">{formatMeasurement(total)}</div>
-        {status === "idle" ? null : (
-          <p className="mt-0.5 text-center text-[10px] leading-none whitespace-nowrap text-slate-500">
-            {status === "saving" ? "خەریکە پاشەکەوت دەکرێت..." : null}
-            {status === "saved" ? <span className="text-emerald-400">پاشەکەوتکرا</span> : null}
-            {status === "error" ? <span className="text-rose-300">{error}</span> : null}
-          </p>
-        )}
-      </td>
-      <td className={cellClass}>
-        <button
-          type="button"
-          onClick={onDelete}
-          className="h-7 whitespace-nowrap rounded px-1 text-[10px] font-medium text-rose-300 transition hover:bg-rose-500/10"
-        >
-          سڕینەوە
-        </button>
-      </td>
-    </tr>
+      </label>
+
+      <div className="mt-3 flex items-center justify-between gap-3 rounded-xl bg-slate-900 px-3 py-3">
+        <span className="text-xs font-medium text-slate-400">کۆی گشتی یەک بابەت</span>
+        <span className="text-lg font-semibold tabular-nums text-emerald-400">{formatMeasurement(total)}</span>
+      </div>
+      {status === "idle" ? null : (
+        <p className="mt-2 text-center text-xs text-slate-500">
+          {status === "saving" ? "خەریکە پاشەکەوت دەکرێت..." : null}
+          {status === "saved" ? <span className="text-emerald-400">پاشەکەوتکرا</span> : null}
+          {status === "error" ? <span className="text-rose-300">{error}</span> : null}
+        </p>
+      )}
+
+      <button
+        type="button"
+        onClick={onDelete}
+        className="no-print mt-3 h-10 w-full rounded-xl text-xs font-medium text-rose-300 transition hover:bg-rose-500/10"
+      >
+        سڕینەوە
+      </button>
+    </article>
+  );
+}
+
+function MetricField({ label, children }: { label: string; children: ReactNode }) {
+  return (
+    <label className="rounded-xl border border-white/10 bg-slate-900 p-2 text-start">
+      <span className="mb-1 block text-[11px] font-medium text-slate-400">{label}</span>
+      {children}
+    </label>
   );
 }
 

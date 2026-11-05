@@ -121,7 +121,7 @@ export function Dashboard({
   }
 
   return (
-    <div className="min-h-full flex-1 bg-slate-950 text-white">
+    <div className="sheet-root min-h-full flex-1 bg-slate-950 text-white">
       <header className="border-b border-white/10">
         <div className="mx-auto flex w-full max-w-7xl flex-col gap-4 px-4 py-5 sm:flex-row sm:items-center sm:justify-between sm:px-6">
           <div className="min-w-0 text-start">
@@ -131,12 +131,12 @@ export function Dashboard({
           <button
             type="button"
             onClick={onLogout}
-            className="h-11 w-full shrink-0 rounded-2xl border border-white/10 px-4 text-sm font-semibold text-slate-200 transition hover:bg-white/5 sm:w-auto"
+            className="no-print h-11 w-full shrink-0 rounded-2xl border border-white/10 px-4 text-sm font-semibold text-slate-200 transition hover:bg-white/5 sm:w-auto"
           >
             دەرچوون
           </button>
         </div>
-        <div className="mx-auto flex w-full max-w-7xl gap-2 px-4 pb-5 sm:px-6">
+        <div className="no-print mx-auto flex w-full max-w-7xl gap-2 px-4 pb-5 sm:px-6">
           <button
             type="button"
             onClick={() => setView("containers")}
@@ -177,7 +177,7 @@ export function Dashboard({
                   setAddError("");
                   setAddOpen(true);
                 }}
-                className="h-11 w-full shrink-0 rounded-2xl bg-teal-500 px-4 text-sm font-semibold text-slate-950 transition hover:bg-teal-400 sm:w-auto"
+                className="no-print h-11 w-full shrink-0 rounded-2xl bg-teal-500 px-4 text-sm font-semibold text-slate-950 transition hover:bg-teal-400 sm:w-auto"
               >
                 زیادکردنی کۆنتێنەر
               </button>
