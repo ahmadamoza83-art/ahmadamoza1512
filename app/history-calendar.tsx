@@ -101,7 +101,7 @@ export function HistoryCalendar({
         <button
           type="button"
           onClick={() => setMode((current) => (current === "days" ? "months" : current === "months" ? "years" : "days"))}
-          className="rounded-xl px-3 py-1.5 text-sm font-semibold text-emerald-400 outline-none transition hover:bg-white/5 focus-visible:ring-2 focus-visible:ring-emerald-400"
+          className="min-w-0 rounded-xl px-2 py-1.5 text-center text-xs font-semibold text-emerald-400 outline-none transition hover:bg-white/5 focus-visible:ring-2 focus-visible:ring-emerald-400 sm:text-sm"
         >
           {title}
         </button>

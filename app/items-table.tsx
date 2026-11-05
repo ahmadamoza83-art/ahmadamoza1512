@@ -58,13 +58,13 @@ export function ItemsTable({
 
   return (
     <div className="mt-5">
-      <div className="mb-4 flex items-center justify-between gap-3">
-        <p className="text-start text-sm text-slate-400">گۆڕانکارییەکان خۆکارانە پاشەکەوت دەکرێن.</p>
+      <div className="mb-4 flex flex-col items-stretch gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <p className="text-start text-sm leading-6 text-slate-400">گۆڕانکارییەکان خۆکارانە پاشەکەوت دەکرێن.</p>
         <button
           type="button"
           onClick={() => void addRow()}
           disabled={adding}
-          className="h-10 shrink-0 rounded-2xl bg-emerald-600 px-4 text-sm font-semibold text-white transition hover:bg-emerald-500 disabled:opacity-60"
+          className="h-10 w-full shrink-0 rounded-2xl bg-emerald-600 px-4 text-sm font-semibold text-white transition hover:bg-emerald-500 disabled:opacity-60 sm:w-auto"
         >
           {adding ? "خەریکە زیاد دەکرێت..." : "زیادکردنی ڕیز"}
         </button>
@@ -76,9 +76,9 @@ export function ItemsTable({
         </p>
       ) : null}
 
-      <div className="overflow-x-auto">
-        <table className="w-full min-w-[920px] border-separate border-spacing-0 text-start">
-          <thead>
+      <div className="max-w-full overflow-x-auto">
+        <table className="block w-full border-separate border-spacing-0 text-start md:table md:min-w-[920px]">
+          <thead className="hidden md:table-header-group">
             <tr className="text-xs text-slate-400">
               <th className="border-b border-white/10 px-2 py-3 font-medium">ناوی بازرگان</th>
               <th className="border-b border-white/10 px-2 py-3 font-medium">پانی</th>
@@ -92,10 +92,10 @@ export function ItemsTable({
               </th>
             </tr>
           </thead>
-          <tbody>
+          <tbody className="block space-y-4 md:table-row-group md:space-y-0">
             {rows.length === 0 ? (
-              <tr>
-                <td colSpan={8} className="px-2 py-8 text-center text-sm text-slate-400">
+              <tr className="block md:table-row">
+                <td colSpan={8} className="block px-2 py-8 text-center text-sm text-slate-400 md:table-cell">
                   هیچ ماددەیەک لە ناو ئەم کۆنتێنەرەدا نییە.
                 </td>
               </tr>
@@ -114,7 +114,7 @@ export function ItemsTable({
         </table>
       </div>
 
-      <div className="mt-4 grid gap-3 sm:grid-cols-2">
+      <div className="mt-4 flex flex-col gap-3 sm:grid sm:grid-cols-2">
         <div className="rounded-2xl border border-white/10 bg-slate-950 px-4 py-3 text-start">
           <p className="text-sm text-slate-400">کۆی گشتی عددی هەموو تاجرەکان</p>
           <p className="mt-1 text-xl font-semibold text-emerald-400">{formatMeasurement(quantityTotal)}</p>
@@ -226,8 +226,9 @@ function ItemRow({
   const total = lineMeasurement(row);
 
   return (
-    <tr className="align-top">
-      <td className="px-2 py-2">
+    <tr className="mb-4 grid grid-cols-2 gap-3 rounded-2xl border border-white/10 bg-slate-950 p-3 last:mb-0 md:mb-0 md:table-row md:rounded-none md:border-0 md:bg-transparent md:p-0">
+      <td className="col-span-2 block px-0 py-0 md:table-cell md:px-2 md:py-2">
+        <FieldLabel>ناوی بازرگان</FieldLabel>
         <input
           ref={merchantRef}
           value={row.merchant}
@@ -237,7 +238,8 @@ function ItemRow({
           className={fieldClass}
         />
       </td>
-      <td className="px-2 py-2">
+      <td className="block min-w-0 px-0 py-0 md:table-cell md:px-2 md:py-2">
+        <FieldLabel>پانی</FieldLabel>
         <input
           value={row.width}
           onChange={(event) => edit({ width: event.target.value })}
@@ -248,7 +250,8 @@ function ItemRow({
           className={`${fieldClass} text-center`}
         />
       </td>
-      <td className="px-2 py-2">
+      <td className="block min-w-0 px-0 py-0 md:table-cell md:px-2 md:py-2">
+        <FieldLabel>درێژی</FieldLabel>
         <input
           value={row.length}
           onChange={(event) => edit({ length: event.target.value })}
@@ -259,7 +262,8 @@ function ItemRow({
           className={`${fieldClass} text-center`}
         />
       </td>
-      <td className="px-2 py-2">
+      <td className="block min-w-0 px-0 py-0 md:table-cell md:px-2 md:py-2">
+        <FieldLabel>بەرزی</FieldLabel>
         <input
           value={row.height}
           onChange={(event) => edit({ height: event.target.value })}
@@ -270,7 +274,8 @@ function ItemRow({
           className={`${fieldClass} text-center`}
         />
       </td>
-      <td className="px-2 py-2">
+      <td className="block min-w-0 px-0 py-0 md:table-cell md:px-2 md:py-2">
+        <FieldLabel>عدد</FieldLabel>
         <input
           value={row.quantity}
           onChange={(event) => edit({ quantity: event.target.value })}
@@ -281,7 +286,8 @@ function ItemRow({
           className={`${fieldClass} text-center`}
         />
       </td>
-      <td className="px-2 py-2">
+      <td className="col-span-2 block px-0 py-0 md:table-cell md:px-2 md:py-2">
+        <FieldLabel>تێبینی</FieldLabel>
         <input
           value={row.notes}
           onChange={(event) => edit({ notes: event.target.value })}
@@ -290,27 +296,32 @@ function ItemRow({
           className={fieldClass}
         />
       </td>
-      <td className="px-2 py-2">
-        <div className="flex h-10 items-center justify-center rounded-xl bg-slate-950 px-3 text-sm font-semibold text-emerald-400">
+      <td className="col-span-2 block px-0 py-0 md:table-cell md:px-2 md:py-2">
+        <FieldLabel>کۆی گشتی یەک بابەت</FieldLabel>
+        <div className="flex h-10 items-center justify-center rounded-xl bg-slate-900 px-3 text-sm font-semibold text-emerald-400 md:bg-slate-950">
           {formatMeasurement(total)}
         </div>
-        <p className="mt-1 text-center text-[11px] text-slate-500">
+        <p className="mt-1 text-center text-[11px] leading-5 break-words text-slate-500">
           {status === "saving" ? "خەریکە پاشەکەوت دەکرێت..." : null}
           {status === "saved" ? <span className="text-emerald-400">پاشەکەوتکرا</span> : null}
           {status === "error" ? <span className="text-rose-300">{error}</span> : null}
         </p>
       </td>
-      <td className="px-2 py-2">
+      <td className="col-span-2 block px-0 py-0 md:table-cell md:px-2 md:py-2">
         <button
           type="button"
           onClick={onDelete}
-          className="h-10 rounded-xl px-3 text-xs font-medium text-rose-300 transition hover:bg-rose-500/10"
+          className="h-10 w-full rounded-xl px-3 text-xs font-medium text-rose-300 transition hover:bg-rose-500/10 md:w-auto"
         >
           سڕینەوە
         </button>
       </td>
     </tr>
   );
+}
+
+function FieldLabel({ children }: { children: string }) {
+  return <span className="mb-1 block text-xs font-medium text-slate-400 md:hidden">{children}</span>;
 }
 
 function toDraft(item: ContainerItem): ItemDraft {

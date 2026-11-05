@@ -123,15 +123,15 @@ export function Dashboard({
   return (
     <div className="min-h-full flex-1 bg-slate-950 text-white">
       <header className="border-b border-white/10">
-        <div className="mx-auto flex w-full max-w-7xl items-center justify-between gap-4 px-4 py-5 sm:px-6">
+        <div className="mx-auto flex w-full max-w-7xl flex-col gap-4 px-4 py-5 sm:flex-row sm:items-center sm:justify-between sm:px-6">
           <div className="min-w-0 text-start">
             <p className="text-sm text-slate-400">بەخێربێیت، {username}</p>
-            <h1 className="truncate text-2xl font-bold">کۆنتێنەرەکان</h1>
+            <h1 className="truncate text-xl font-bold sm:text-2xl">کۆنتێنەرەکان</h1>
           </div>
           <button
             type="button"
             onClick={onLogout}
-            className="h-11 shrink-0 rounded-2xl border border-white/10 px-4 text-sm font-semibold text-slate-200 transition hover:bg-white/5"
+            className="h-11 w-full shrink-0 rounded-2xl border border-white/10 px-4 text-sm font-semibold text-slate-200 transition hover:bg-white/5 sm:w-auto"
           >
             دەرچوون
           </button>
@@ -140,7 +140,7 @@ export function Dashboard({
           <button
             type="button"
             onClick={() => setView("containers")}
-            className={`h-10 rounded-2xl px-4 text-sm font-semibold transition ${
+            className={`h-10 flex-1 rounded-2xl px-4 text-sm font-semibold transition sm:flex-none ${
               view === "containers" ? "bg-white text-slate-950" : "bg-white/5 text-slate-300 hover:bg-white/10"
             }`}
           >
@@ -149,7 +149,7 @@ export function Dashboard({
           <button
             type="button"
             onClick={() => setView("history")}
-            className={`h-10 rounded-2xl px-4 text-sm font-semibold transition ${
+            className={`h-10 flex-1 rounded-2xl px-4 text-sm font-semibold transition sm:flex-none ${
               view === "history" ? "bg-white text-slate-950" : "bg-white/5 text-slate-300 hover:bg-white/10"
             }`}
           >
@@ -158,10 +158,10 @@ export function Dashboard({
         </div>
       </header>
 
-      <main className="mx-auto flex w-full max-w-7xl flex-col gap-6 px-4 py-6 sm:px-6">
-        <div className={`grid gap-6 ${selected ? "" : "lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]"}`}>
-        <section className="rounded-3xl border border-white/10 bg-slate-900 p-5">
-          <div className="mb-5 flex items-center justify-between gap-3">
+      <main className="mx-auto flex w-full min-w-0 max-w-7xl flex-col gap-6 px-4 py-6 sm:px-6">
+        <div className={`flex min-w-0 flex-col gap-6 ${selected ? "" : "lg:grid lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]"}`}>
+        <section className="min-w-0 rounded-3xl border border-white/10 bg-slate-900 p-4 sm:p-5">
+          <div className="mb-5 flex flex-col items-stretch gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div className="text-start">
               <h2 className="text-lg font-semibold">
                 {view === "history" ? "مێژوو" : "هەموو کۆنتێنەرەکان"}
@@ -177,7 +177,7 @@ export function Dashboard({
                   setAddError("");
                   setAddOpen(true);
                 }}
-                className="h-11 shrink-0 rounded-2xl bg-teal-500 px-4 text-sm font-semibold text-slate-950 transition hover:bg-teal-400"
+                className="h-11 w-full shrink-0 rounded-2xl bg-teal-500 px-4 text-sm font-semibold text-slate-950 transition hover:bg-teal-400 sm:w-auto"
               >
                 زیادکردنی کۆنتێنەر
               </button>
@@ -283,7 +283,7 @@ export function Dashboard({
         </section>
 
         {selected ? null : (
-          <section className="rounded-3xl border border-white/10 bg-slate-900 p-5">
+          <section className="min-w-0 rounded-3xl border border-white/10 bg-slate-900 p-4 sm:p-5">
             <h2 className="text-lg font-semibold">ماددەکانی کۆنتێنەر</h2>
             <p className="mt-1 text-sm text-slate-400">
               {view === "history" && !selectedDay
@@ -295,7 +295,7 @@ export function Dashboard({
         </div>
 
         {selected ? (
-          <section className="rounded-3xl border border-white/10 bg-slate-900 p-5">
+          <section className="min-w-0 rounded-3xl border border-white/10 bg-slate-900 p-4 sm:p-5">
             <h2 className="text-lg font-semibold">ماددەکانی کۆنتێنەر</h2>
             <p className="mt-1 text-sm text-slate-400">{selected.container_number}</p>
             {itemsError ? (
