@@ -60,11 +60,15 @@ body {
   .sheet-root .item-card,
   .sheet-root section,
   .sheet-root input,
-  .sheet-root header {
+  .sheet-root header,
+  .sheet-root table,
+  .sheet-root th,
+  .sheet-root td {
     background: #fff !important;
     border-color: #d1d5db !important;
   }
 
+  .sheet-root tr,
   .sheet-root .item-card {
     break-inside: avoid;
     page-break-inside: avoid;

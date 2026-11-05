@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState } from "react";
 import { createContainerItem, deleteContainerItem, updateContainerItem } from "@/app/actions";
 import type { ContainerItem } from "@/lib/containers";
 import {
@@ -12,7 +12,7 @@ import {
 } from "@/lib/item-measure";
 
 const fieldClass =
-  "admin-field h-10 w-full rounded-xl border border-slate-700 bg-slate-950 px-3 text-sm text-white caret-white outline-none placeholder:text-slate-500 focus:border-emerald-400";
+  "admin-field box-border h-7 w-full min-w-0 rounded border border-slate-700 bg-slate-950 px-0.5 text-[11px] leading-none text-white caret-white outline-none placeholder:text-slate-500 focus:border-emerald-400";
 
 export function ItemsTable({
   containerId,
@@ -28,6 +28,11 @@ export function ItemsTable({
 
   const quantityTotal = rows.reduce((sum, row) => sum + liveNumber(row.quantity), 0);
   const measurementTotal = rows.reduce((sum, row) => sum + lineMeasurement(row), 0);
+  const merchantTotals = new Map<string, number>();
+  for (const row of rows) {
+    const key = row.merchant.trim();
+    merchantTotals.set(key, (merchantTotals.get(key) ?? 0) + lineMeasurement(row));
+  }
 
   function updateRow(next: ItemDraft) {
     setRows((current) => current.map((row) => (row.id === next.id ? next : row)));
@@ -85,22 +90,55 @@ export function ItemsTable({
         </p>
       ) : null}
 
-      <div className="flex flex-col gap-3">
-        {rows.length === 0 ? (
-          <p className="item-card rounded-2xl border border-dashed border-white/15 px-4 py-8 text-center text-sm text-slate-400">
-            هیچ ماددەیەک لە ناو ئەم کۆنتێنەرەدا نییە.
-          </p>
-        ) : (
-          rows.map((row) => (
-            <ItemRow
-              key={row.id}
-              row={row}
-              autoFocus={row.id === focusId}
-              onChange={updateRow}
-              onDelete={() => void removeRow(row.id)}
-            />
-          ))
-        )}
+      <div className="w-full overflow-hidden rounded-xl border border-white/10">
+        <table className="w-full table-fixed border-collapse text-start text-[11px]">
+          <colgroup>
+            <col className="w-[16%]" />
+            <col className="w-[9%]" />
+            <col className="w-[9%]" />
+            <col className="w-[9%]" />
+            <col className="w-[8%]" />
+            <col className="w-[14%]" />
+            <col className="w-[15%]" />
+            <col className="w-[14%]" />
+            <col className="w-[6%]" />
+          </colgroup>
+          <thead>
+            <tr className="bg-slate-950 text-slate-300">
+              <th className={headClass}>ناوی بازرگان</th>
+              <th className={headClass}>پانی</th>
+              <th className={headClass}>درێژی</th>
+              <th className={headClass}>بەرزی</th>
+              <th className={headClass}>عدد</th>
+              <th className={headClass}>تێبینی</th>
+              <th className={headClass}>کۆی گشتی یەک بابەت</th>
+              <th className={headClass}>کۆی گشتی تاجر</th>
+              <th className={headClass}>
+                <span className="sr-only">سڕینەوە</span>
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            {rows.length === 0 ? (
+              <tr>
+                <td colSpan={9} className="px-2 py-8 text-center text-xs text-slate-400">
+                  هیچ ماددەیەک لە ناو ئەم کۆنتێنەرەدا نییە.
+                </td>
+              </tr>
+            ) : (
+              rows.map((row) => (
+                <ItemRow
+                  key={row.id}
+                  row={row}
+                  merchantTotal={merchantTotals.get(row.merchant.trim()) ?? 0}
+                  autoFocus={row.id === focusId}
+                  onChange={updateRow}
+                  onDelete={() => void removeRow(row.id)}
+                />
+              ))
+            )}
+          </tbody>
+        </table>
       </div>
 
       <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
@@ -117,13 +155,18 @@ export function ItemsTable({
   );
 }
 
+const headClass = "border border-white/10 px-0.5 py-1 text-center text-[10px] font-medium leading-tight break-words";
+const cellClass = "border border-white/10 p-0.5 align-middle";
+
 function ItemRow({
   row,
+  merchantTotal,
   autoFocus,
   onChange,
   onDelete,
 }: {
   row: ItemDraft;
+  merchantTotal: number;
   autoFocus: boolean;
   onChange: (row: ItemDraft) => void;
   onDelete: () => void;
@@ -215,106 +258,100 @@ function ItemRow({
   const total = lineMeasurement(row);
 
   return (
-    <article className="item-card rounded-2xl border border-white/10 bg-slate-950 p-4">
-      <label className="block text-start">
-        <span className="mb-1 block text-xs font-medium text-slate-400">ناوی بازرگان</span>
+    <tr>
+      <td className={cellClass}>
         <input
           ref={merchantRef}
           value={row.merchant}
           onChange={(event) => edit({ merchant: event.target.value })}
           onBlur={flush}
-          placeholder="ناوی بازرگان"
-          className={fieldClass}
+          placeholder="بازرگان"
+          aria-label="ناوی بازرگان"
+          className={`${fieldClass} text-start`}
         />
-      </label>
-
-      <div className="mt-3 grid grid-cols-2 gap-2">
-        <MetricField label="پانی">
-          <input
-            value={row.width}
-            onChange={(event) => edit({ width: event.target.value })}
-            onBlur={flush}
-            inputMode="decimal"
-            dir="ltr"
-            placeholder="0"
-            className={`${fieldClass} text-center tabular-nums`}
-          />
-        </MetricField>
-        <MetricField label="درێژی">
-          <input
-            value={row.length}
-            onChange={(event) => edit({ length: event.target.value })}
-            onBlur={flush}
-            inputMode="decimal"
-            dir="ltr"
-            placeholder="0"
-            className={`${fieldClass} text-center tabular-nums`}
-          />
-        </MetricField>
-        <MetricField label="بەرزی">
-          <input
-            value={row.height}
-            onChange={(event) => edit({ height: event.target.value })}
-            onBlur={flush}
-            inputMode="decimal"
-            dir="ltr"
-            placeholder="0"
-            className={`${fieldClass} text-center tabular-nums`}
-          />
-        </MetricField>
-        <MetricField label="عدد">
-          <input
-            value={row.quantity}
-            onChange={(event) => edit({ quantity: event.target.value })}
-            onBlur={flush}
-            inputMode="decimal"
-            dir="ltr"
-            placeholder="0"
-            className={`${fieldClass} text-center tabular-nums`}
-          />
-        </MetricField>
-      </div>
-
-      <label className="mt-3 block text-start">
-        <span className="mb-1 block text-xs font-medium text-slate-400">تێبینی</span>
+      </td>
+      <td className={cellClass}>
+        <input
+          value={row.width}
+          onChange={(event) => edit({ width: event.target.value })}
+          onBlur={flush}
+          inputMode="decimal"
+          dir="ltr"
+          placeholder="0"
+          aria-label="پانی"
+          className={`${fieldClass} text-center tabular-nums`}
+        />
+      </td>
+      <td className={cellClass}>
+        <input
+          value={row.length}
+          onChange={(event) => edit({ length: event.target.value })}
+          onBlur={flush}
+          inputMode="decimal"
+          dir="ltr"
+          placeholder="0"
+          aria-label="درێژی"
+          className={`${fieldClass} text-center tabular-nums`}
+        />
+      </td>
+      <td className={cellClass}>
+        <input
+          value={row.height}
+          onChange={(event) => edit({ height: event.target.value })}
+          onBlur={flush}
+          inputMode="decimal"
+          dir="ltr"
+          placeholder="0"
+          aria-label="بەرزی"
+          className={`${fieldClass} text-center tabular-nums`}
+        />
+      </td>
+      <td className={cellClass}>
+        <input
+          value={row.quantity}
+          onChange={(event) => edit({ quantity: event.target.value })}
+          onBlur={flush}
+          inputMode="decimal"
+          dir="ltr"
+          placeholder="0"
+          aria-label="عدد"
+          className={`${fieldClass} text-center tabular-nums`}
+        />
+      </td>
+      <td className={cellClass}>
         <input
           value={row.notes}
           onChange={(event) => edit({ notes: event.target.value })}
           onBlur={flush}
           placeholder="تێبینی"
+          aria-label="تێبینی"
           className={fieldClass}
         />
-      </label>
-
-      <div className="mt-3 flex items-center justify-between gap-3 rounded-xl bg-slate-900 px-3 py-3">
-        <span className="text-xs font-medium text-slate-400">کۆی گشتی یەک بابەت</span>
-        <span className="text-lg font-semibold tabular-nums text-emerald-400">{formatMeasurement(total)}</span>
-      </div>
-      {status === "idle" ? null : (
-        <p className="mt-2 text-center text-xs text-slate-500">
-          {status === "saving" ? "خەریکە پاشەکەوت دەکرێت..." : null}
-          {status === "saved" ? <span className="text-emerald-400">پاشەکەوتکرا</span> : null}
-          {status === "error" ? <span className="text-rose-300">{error}</span> : null}
-        </p>
-      )}
-
-      <button
-        type="button"
-        onClick={onDelete}
-        className="no-print mt-3 h-10 w-full rounded-xl text-xs font-medium text-rose-300 transition hover:bg-rose-500/10"
-      >
-        سڕینەوە
-      </button>
-    </article>
-  );
-}
-
-function MetricField({ label, children }: { label: string; children: ReactNode }) {
-  return (
-    <label className="rounded-xl border border-white/10 bg-slate-900 p-2 text-start">
-      <span className="mb-1 block text-[11px] font-medium text-slate-400">{label}</span>
-      {children}
-    </label>
+      </td>
+      <td className={`${cellClass} text-center`}>
+        <div className="truncate px-0.5 text-[11px] font-semibold tabular-nums text-emerald-400">{formatMeasurement(total)}</div>
+        {status === "idle" ? null : (
+          <p className="truncate text-center text-[9px] leading-none text-slate-500" title={error}>
+            {status === "saving" ? "..." : null}
+            {status === "saved" ? <span className="text-emerald-400">پاشەکەوتکرا</span> : null}
+            {status === "error" ? <span className="text-rose-300">{error}</span> : null}
+          </p>
+        )}
+      </td>
+      <td className={`${cellClass} text-center text-[11px] font-semibold tabular-nums text-emerald-300`}>
+        {formatMeasurement(merchantTotal)}
+      </td>
+      <td className={`${cellClass} text-center`}>
+        <button
+          type="button"
+          onClick={onDelete}
+          aria-label="سڕینەوە"
+          className="no-print h-7 w-full rounded text-xs font-medium text-rose-300 transition hover:bg-rose-500/10"
+        >
+          ×
+        </button>
+      </td>
+    </tr>
   );
 }
 

@@ -102,6 +102,13 @@ export function Dashboard({
     }
     setItems(result.items);
     setItemsVersion((version) => version + 1);
+    window.scrollTo({ top: 0 });
+  }
+
+  function closeDetail() {
+    setSelectedId(null);
+    setItems([]);
+    setItemsError("");
   }
 
   async function onAdd(event: FormEvent) {
@@ -124,9 +131,24 @@ export function Dashboard({
     <div className="sheet-root min-h-full flex-1 bg-slate-950 text-white">
       <header className="border-b border-white/10">
         <div className="mx-auto flex w-full max-w-7xl flex-col gap-4 px-4 py-5 sm:flex-row sm:items-center sm:justify-between sm:px-6">
-          <div className="min-w-0 text-start">
-            <p className="text-sm text-slate-400">بەخێربێیت، {username}</p>
-            <h1 className="truncate text-xl font-bold sm:text-2xl">کۆنتێنەرەکان</h1>
+          <div className="flex min-w-0 items-center gap-3 text-start">
+            {selected ? (
+              <button
+                type="button"
+                onClick={closeDetail}
+                className="no-print h-11 shrink-0 rounded-2xl border border-white/10 px-3 text-sm font-semibold text-slate-200 transition hover:bg-white/5"
+              >
+                گەڕانەوە
+              </button>
+            ) : null}
+            <div className="min-w-0">
+              <p className="text-sm text-slate-400">
+                {selected ? "ماددەکانی کۆنتێنەر" : `بەخێربێیت، ${username}`}
+              </p>
+              <h1 className="truncate text-xl font-bold sm:text-2xl">
+                {selected ? selected.container_number : "کۆنتێنەرەکان"}
+              </h1>
+            </div>
           </div>
           <button
             type="button"
@@ -136,7 +158,7 @@ export function Dashboard({
             دەرچوون
           </button>
         </div>
-        <div className="no-print mx-auto flex w-full max-w-7xl gap-2 px-4 pb-5 sm:px-6">
+        <div className={`no-print mx-auto flex w-full max-w-7xl gap-2 px-4 pb-5 sm:px-6 ${selected ? "hidden" : ""}`}>
           <button
             type="button"
             onClick={() => setView("containers")}
@@ -158,8 +180,25 @@ export function Dashboard({
         </div>
       </header>
 
-      <main className="mx-auto flex w-full min-w-0 max-w-7xl flex-col gap-6 px-4 py-6 sm:px-6">
-        <div className={`flex min-w-0 flex-col gap-6 ${selected ? "" : "lg:grid lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]"}`}>
+      <main className="mx-auto flex w-full min-w-0 max-w-7xl flex-col gap-6 px-2 py-4 sm:px-6 sm:py-6">
+        {selected ? (
+          <section className="min-w-0 rounded-3xl border border-white/10 bg-slate-900 p-2 sm:p-5">
+            {itemsError ? (
+              <p role="alert" className="mb-4 rounded-2xl bg-rose-500/10 px-4 py-3 text-sm text-rose-200">
+                {itemsError}
+              </p>
+            ) : null}
+            {itemsLoading ? (
+              <p className="py-10 text-center text-sm text-slate-400">باردەکرێت...</p>
+            ) : itemsError ? null : (
+              <ItemsTable
+                key={`${selected.id}:${itemsVersion}`}
+                containerId={selected.id}
+                items={items}
+              />
+            )}
+          </section>
+        ) : (
         <section className="min-w-0 rounded-3xl border border-white/10 bg-slate-900 p-4 sm:p-5">
           <div className="mb-5 flex flex-col items-stretch gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div className="text-start">
@@ -281,39 +320,7 @@ export function Dashboard({
             </ul>
           )}
         </section>
-
-        {selected ? null : (
-          <section className="min-w-0 rounded-3xl border border-white/10 bg-slate-900 p-4 sm:p-5">
-            <h2 className="text-lg font-semibold">ماددەکانی کۆنتێنەر</h2>
-            <p className="mt-1 text-sm text-slate-400">
-              {view === "history" && !selectedDay
-                ? "سەرەتا ڕۆژێک لە ڕۆژژمێرەکە هەڵبژێرە."
-                : "کۆنتێنەرێک هەڵبژێرە بۆ بینینی ماددەکانی."}
-            </p>
-          </section>
         )}
-        </div>
-
-        {selected ? (
-          <section className="min-w-0 rounded-3xl border border-white/10 bg-slate-900 p-4 sm:p-5">
-            <h2 className="text-lg font-semibold">ماددەکانی کۆنتێنەر</h2>
-            <p className="mt-1 text-sm text-slate-400">{selected.container_number}</p>
-            {itemsError ? (
-              <p role="alert" className="mt-4 rounded-2xl bg-rose-500/10 px-4 py-3 text-sm text-rose-200">
-                {itemsError}
-              </p>
-            ) : null}
-            {itemsLoading ? (
-              <p className="py-10 text-center text-sm text-slate-400">باردەکرێت...</p>
-            ) : itemsError ? null : (
-              <ItemsTable
-                key={`${selected.id}:${itemsVersion}`}
-                containerId={selected.id}
-                items={items}
-              />
-            )}
-          </section>
-        ) : null}
       </main>
 
       {addOpen ? (
