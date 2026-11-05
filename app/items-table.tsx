@@ -12,7 +12,7 @@ import {
 } from "@/lib/item-measure";
 
 const fieldClass =
-  "admin-field box-border h-7 w-full min-w-0 rounded border border-slate-700 bg-slate-950 px-0.5 text-[11px] leading-none text-white caret-white outline-none placeholder:text-slate-500 focus:border-emerald-400";
+  "admin-field box-border h-9 w-full min-w-0 rounded-lg border border-slate-700 bg-slate-900 px-2 text-xs leading-none text-white caret-white outline-none placeholder:text-slate-500 focus:border-emerald-400";
 
 export function ItemsTable({
   containerId,
@@ -135,26 +135,17 @@ export function ItemsTable({
   }
 
   return (
-    <div className="mt-5">
-      <div className="no-print mb-4 flex flex-col items-stretch gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <p className="text-start text-sm leading-6 text-slate-400">گۆڕانکارییەکان خۆکارانە پاشەکەوت دەکرێن.</p>
-        <div className="flex flex-col gap-2 sm:flex-row">
-          <button
-            type="button"
-            onClick={() => window.print()}
-            className="h-10 w-full shrink-0 rounded-2xl border border-white/10 px-4 text-sm font-semibold text-slate-200 transition hover:bg-white/5 sm:w-auto"
-          >
-            چاپکردن
-          </button>
-          <button
-            type="button"
-            onClick={() => void addRow()}
-            disabled={adding}
-            className="h-10 w-full shrink-0 rounded-2xl bg-emerald-600 px-4 text-sm font-semibold text-white transition hover:bg-emerald-500 disabled:opacity-60 sm:w-auto"
-          >
-            {adding ? "خەریکە زیاد دەکرێت..." : "زیادکردنی ڕیز"}
-          </button>
-        </div>
+    <div>
+      <div className="no-print flex h-10 items-center justify-between gap-2 border-b border-white/10 px-2">
+        <p className="min-w-0 truncate text-start text-[11px] text-slate-500">گۆڕانکارییەکان خۆکارانە پاشەکەوت دەکرێن.</p>
+        <button
+          type="button"
+          onClick={() => void addRow()}
+          disabled={adding}
+          className="h-8 shrink-0 rounded-full bg-emerald-600 px-3 text-xs font-semibold text-white transition hover:bg-emerald-500 disabled:opacity-60"
+        >
+          {adding ? "..." : "زیادکردنی ڕیز"}
+        </button>
       </div>
 
       {tableError ? (
@@ -163,18 +154,18 @@ export function ItemsTable({
         </p>
       ) : null}
 
-      <div className="w-full overflow-hidden rounded-xl border border-white/10">
-        <table className="w-full table-fixed border-collapse text-start text-[11px]">
+      <div className="w-full overflow-x-auto">
+        <table className="w-full min-w-[760px] table-fixed border-collapse text-start text-xs">
           <colgroup>
+            <col className="w-[18%]" />
+            <col className="w-[12%]" />
+            <col className="w-[12%]" />
+            <col className="w-[12%]" />
+            <col className="w-[12%]" />
             <col className="w-[16%]" />
-            <col className="w-[9%]" />
-            <col className="w-[9%]" />
-            <col className="w-[9%]" />
-            <col className="w-[8%]" />
-            <col className="w-[14%]" />
-            <col className="w-[15%]" />
-            <col className="w-[14%]" />
-            <col className="w-[6%]" />
+            <col className="w-[7%]" />
+            <col className="w-[7%]" />
+            <col className="w-[4%]" />
           </colgroup>
           <thead>
             <tr className="bg-slate-950 text-slate-300">
@@ -183,7 +174,12 @@ export function ItemsTable({
               <th className={headClass}>درێژی</th>
               <th className={headClass}>بەرزی</th>
               <th className={headClass}>عدد</th>
-              <th className={headClass}>تێبینی</th>
+              <th className={headClass}>
+                <span className="inline-flex items-center justify-center gap-1">
+                  <PencilIcon />
+                  تێبینی
+                </span>
+              </th>
               <th className={headClass}>کۆی گشتی یەک بابەت</th>
               <th className={headClass}>کۆی گشتی تاجر</th>
               <th className={headClass}>
@@ -352,22 +348,27 @@ function ItemRow({
     <tr>
       {lead ? (
         <td rowSpan={span} className={`${cellClass} align-middle`}>
-          <input
-            ref={merchantRef}
-            value={row.merchant}
-            onChange={(event) => {
-              latest.current = { ...latest.current, merchant: event.target.value };
-              onPatchMerchant(event.target.value);
-            }}
-            onBlur={() => {
-              flush();
-              onFlushMerchant();
-            }}
-            onKeyDown={onEnter}
-            placeholder="بازرگان"
-            aria-label="ناوی بازرگان"
-            className={`${fieldClass} text-start`}
-          />
+          <div className="flex items-center gap-1">
+            <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-emerald-500/15 text-[11px] font-semibold text-emerald-300">
+              {merchantBadge(row.merchant)}
+            </span>
+            <input
+              ref={merchantRef}
+              value={row.merchant}
+              onChange={(event) => {
+                latest.current = { ...latest.current, merchant: event.target.value };
+                onPatchMerchant(event.target.value);
+              }}
+              onBlur={() => {
+                flush();
+                onFlushMerchant();
+              }}
+              onKeyDown={onEnter}
+              placeholder="بازرگان"
+              aria-label="ناوی بازرگان"
+              className={`${fieldClass} text-start`}
+            />
+          </div>
         </td>
       ) : null}
       <td className={cellClass}>
@@ -424,15 +425,18 @@ function ItemRow({
         />
       </td>
       <td className={cellClass}>
-        <input
-          value={row.notes}
-          onChange={(event) => edit({ notes: event.target.value })}
-          onBlur={flush}
-          onKeyDown={onEnter}
-          placeholder="تێبینی"
-          aria-label="تێبینی"
-          className={fieldClass}
-        />
+        <div className="flex items-center gap-1">
+          <PencilIcon />
+          <input
+            value={row.notes}
+            onChange={(event) => edit({ notes: event.target.value })}
+            onBlur={flush}
+            onKeyDown={onEnter}
+            placeholder="تێبینی"
+            aria-label="تێبینی"
+            className={fieldClass}
+          />
+        </div>
       </td>
       <td className={`${cellClass} text-center text-[11px] font-semibold tabular-nums text-emerald-400`}>
         {rowMeasure(row)}
@@ -471,6 +475,19 @@ function toDraft(item: ContainerItem): ItemDraft {
 function fieldNumber(value: number | null) {
   if (value === null || Number.isNaN(value)) return "";
   return String(value);
+}
+
+function merchantBadge(name: string) {
+  const letter = name.trim().charAt(0);
+  return letter || "•";
+}
+
+function PencilIcon() {
+  return (
+    <svg viewBox="0 0 20 20" aria-hidden="true" className="h-3.5 w-3.5 shrink-0 fill-none stroke-slate-400 stroke-[1.6]">
+      <path d="M12.5 3.5l4 4L7 17H3v-4L12.5 3.5z" strokeLinejoin="round" />
+    </svg>
+  );
 }
 
 function merchantKey(name: string) {

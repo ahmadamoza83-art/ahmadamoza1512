@@ -128,27 +128,41 @@ export function Dashboard({
   }
 
   return (
-    <div className="sheet-root min-h-full flex-1 bg-slate-950 text-white">
-      <header className="border-b border-white/10">
-        <div className="mx-auto flex w-full max-w-7xl flex-col gap-4 px-4 py-5 sm:flex-row sm:items-center sm:justify-between sm:px-6">
-          <div className="flex min-w-0 items-center gap-3 text-start">
-            {selected ? (
-              <button
-                type="button"
-                onClick={closeDetail}
-                className="no-print h-11 shrink-0 rounded-2xl border border-white/10 px-3 text-sm font-semibold text-slate-200 transition hover:bg-white/5"
-              >
-                گەڕانەوە
-              </button>
-            ) : null}
-            <div className="min-w-0">
-              <p className="text-sm text-slate-400">
-                {selected ? "ماددەکانی کۆنتێنەر" : `بەخێربێیت، ${username}`}
-              </p>
-              <h1 className="truncate text-xl font-bold sm:text-2xl">
-                {selected ? selected.container_number : "کۆنتێنەرەکان"}
-              </h1>
-            </div>
+    <div className="sheet-root min-h-full flex-1 overflow-x-hidden bg-slate-950 text-white">
+      <header className={`border-b border-white/10 ${selected ? "sticky top-0 z-20 bg-slate-950" : ""}`}>
+        {selected ? (
+          <div className="flex h-12 w-full items-center gap-1 px-2">
+            <button
+              type="button"
+              onClick={closeDetail}
+              aria-label="گەڕانەوە"
+              className="no-print flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-slate-200 transition hover:bg-white/10"
+            >
+              <BackIcon />
+            </button>
+            <h1 className="min-w-0 flex-1 truncate text-start text-sm font-semibold">{selected.container_number}</h1>
+            <button
+              type="button"
+              onClick={() => window.print()}
+              aria-label="چاپکردن"
+              className="no-print flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-slate-300 transition hover:bg-white/10"
+            >
+              <PrintIcon />
+            </button>
+            <button
+              type="button"
+              onClick={onLogout}
+              aria-label="دەرچوون"
+              className="no-print flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-slate-300 transition hover:bg-white/10"
+            >
+              <LogoutIcon />
+            </button>
+          </div>
+        ) : null}
+        <div className={`${selected ? "hidden" : ""} mx-auto flex w-full max-w-7xl flex-col gap-4 px-4 py-5 sm:flex-row sm:items-center sm:justify-between sm:px-6`}>
+          <div className="min-w-0 text-start">
+            <p className="text-sm text-slate-400">بەخێربێیت، {username}</p>
+            <h1 className="truncate text-xl font-bold sm:text-2xl">کۆنتێنەرەکان</h1>
           </div>
           <button
             type="button"
@@ -180,9 +194,9 @@ export function Dashboard({
         </div>
       </header>
 
-      <main className="mx-auto flex w-full min-w-0 max-w-7xl flex-col gap-6 px-2 py-4 sm:px-6 sm:py-6">
+      <main className={`mx-auto flex w-full min-w-0 flex-col ${selected ? "max-w-none gap-0 px-0 py-0" : "max-w-7xl gap-6 px-2 py-4 sm:px-6 sm:py-6"}`}>
         {selected ? (
-          <section className="min-w-0 rounded-3xl border border-white/10 bg-slate-900 p-2 sm:p-5">
+          <section className="min-w-0 w-full bg-slate-950">
             {itemsError ? (
               <p role="alert" className="mb-4 rounded-2xl bg-rose-500/10 px-4 py-3 text-sm text-rose-200">
                 {itemsError}
@@ -379,5 +393,32 @@ export function Dashboard({
         </div>
       ) : null}
     </div>
+  );
+}
+
+function BackIcon() {
+  return (
+    <svg viewBox="0 0 20 20" aria-hidden="true" className="h-5 w-5 fill-none stroke-current stroke-2">
+      <path d="M8 4l6 6-6 6" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+function PrintIcon() {
+  return (
+    <svg viewBox="0 0 20 20" aria-hidden="true" className="h-4 w-4 fill-none stroke-current stroke-[1.6]">
+      <path d="M6 7V3h8v4" strokeLinejoin="round" />
+      <path d="M5 13H3V8h14v5h-2" strokeLinejoin="round" />
+      <path d="M6 11h8v6H6z" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+function LogoutIcon() {
+  return (
+    <svg viewBox="0 0 20 20" aria-hidden="true" className="h-4 w-4 fill-none stroke-current stroke-[1.6]">
+      <path d="M8 4H4v12h4" strokeLinejoin="round" />
+      <path d="M8 10h8M13 6l4 4-4 4" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
   );
 }
