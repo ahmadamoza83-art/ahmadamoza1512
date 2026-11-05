@@ -12,7 +12,9 @@ import {
 } from "@/lib/item-measure";
 
 const fieldClass =
-  "admin-field h-10 w-full rounded-xl border border-slate-700 bg-slate-800 px-3 text-sm text-white caret-white outline-none placeholder:text-slate-500 focus:border-emerald-400";
+  "admin-field h-7 w-full rounded border border-slate-700 bg-slate-800 px-1 text-[11px] leading-none text-white caret-white outline-none placeholder:text-slate-500 focus:border-emerald-400";
+const headClass = "whitespace-nowrap border border-white/10 px-1 py-1 text-center font-medium";
+const cellClass = "border border-white/10 p-1 align-middle";
 
 export function ItemsTable({
   containerId,
@@ -76,26 +78,24 @@ export function ItemsTable({
         </p>
       ) : null}
 
-      <div className="max-w-full overflow-x-auto">
-        <table className="block w-full border-separate border-spacing-0 text-start md:table md:min-w-[920px]">
-          <thead className="hidden md:table-header-group">
-            <tr className="text-xs text-slate-400">
-              <th className="border-b border-white/10 px-2 py-3 font-medium">ناوی بازرگان</th>
-              <th className="border-b border-white/10 px-2 py-3 font-medium">پانی</th>
-              <th className="border-b border-white/10 px-2 py-3 font-medium">درێژی</th>
-              <th className="border-b border-white/10 px-2 py-3 font-medium">بەرزی</th>
-              <th className="border-b border-white/10 px-2 py-3 font-medium">عدد</th>
-              <th className="border-b border-white/10 px-2 py-3 font-medium">تێبینی</th>
-              <th className="border-b border-white/10 px-2 py-3 font-medium">کۆی گشتی یەک بابەت</th>
-              <th className="border-b border-white/10 px-2 py-3 font-medium">
-                <span className="sr-only">سڕینەوە</span>
-              </th>
+      <div className="max-w-full overflow-x-auto rounded-xl border border-white/10">
+        <table className="w-max min-w-full border-collapse text-start text-[11px]">
+          <thead>
+            <tr className="bg-slate-950 text-[10px] text-slate-300">
+              <th className={`${headClass} min-w-[6.5rem]`}>ناوی بازرگان</th>
+              <th className={`${headClass} w-14`}>پانی</th>
+              <th className={`${headClass} w-14`}>درێژی</th>
+              <th className={`${headClass} w-14`}>بەرزی</th>
+              <th className={`${headClass} w-14`}>عدد</th>
+              <th className={`${headClass} min-w-[5.5rem]`}>تێبینی</th>
+              <th className={`${headClass} min-w-[5.5rem]`}>کۆی گشتی یەک بابەت</th>
+              <th className={`${headClass} w-14`}>سڕینەوە</th>
             </tr>
           </thead>
-          <tbody className="block space-y-4 md:table-row-group md:space-y-0">
+          <tbody>
             {rows.length === 0 ? (
-              <tr className="block md:table-row">
-                <td colSpan={8} className="block px-2 py-8 text-center text-sm text-slate-400 md:table-cell">
+              <tr>
+                <td colSpan={8} className="px-1 py-6 text-center text-[11px] text-slate-400">
                   هیچ ماددەیەک لە ناو ئەم کۆنتێنەرەدا نییە.
                 </td>
               </tr>
@@ -226,9 +226,8 @@ function ItemRow({
   const total = lineMeasurement(row);
 
   return (
-    <tr className="mb-4 grid grid-cols-2 gap-3 rounded-2xl border border-white/10 bg-slate-950 p-3 last:mb-0 md:mb-0 md:table-row md:rounded-none md:border-0 md:bg-transparent md:p-0">
-      <td className="col-span-2 block px-0 py-0 md:table-cell md:px-2 md:py-2">
-        <FieldLabel>ناوی بازرگان</FieldLabel>
+    <tr>
+      <td className={cellClass}>
         <input
           ref={merchantRef}
           value={row.merchant}
@@ -238,8 +237,7 @@ function ItemRow({
           className={fieldClass}
         />
       </td>
-      <td className="block min-w-0 px-0 py-0 md:table-cell md:px-2 md:py-2">
-        <FieldLabel>پانی</FieldLabel>
+      <td className={cellClass}>
         <input
           value={row.width}
           onChange={(event) => edit({ width: event.target.value })}
@@ -247,11 +245,10 @@ function ItemRow({
           inputMode="decimal"
           dir="ltr"
           placeholder="0"
-          className={`${fieldClass} text-center`}
+          className={`${fieldClass} text-center tabular-nums`}
         />
       </td>
-      <td className="block min-w-0 px-0 py-0 md:table-cell md:px-2 md:py-2">
-        <FieldLabel>درێژی</FieldLabel>
+      <td className={cellClass}>
         <input
           value={row.length}
           onChange={(event) => edit({ length: event.target.value })}
@@ -259,11 +256,10 @@ function ItemRow({
           inputMode="decimal"
           dir="ltr"
           placeholder="0"
-          className={`${fieldClass} text-center`}
+          className={`${fieldClass} text-center tabular-nums`}
         />
       </td>
-      <td className="block min-w-0 px-0 py-0 md:table-cell md:px-2 md:py-2">
-        <FieldLabel>بەرزی</FieldLabel>
+      <td className={cellClass}>
         <input
           value={row.height}
           onChange={(event) => edit({ height: event.target.value })}
@@ -271,11 +267,10 @@ function ItemRow({
           inputMode="decimal"
           dir="ltr"
           placeholder="0"
-          className={`${fieldClass} text-center`}
+          className={`${fieldClass} text-center tabular-nums`}
         />
       </td>
-      <td className="block min-w-0 px-0 py-0 md:table-cell md:px-2 md:py-2">
-        <FieldLabel>عدد</FieldLabel>
+      <td className={cellClass}>
         <input
           value={row.quantity}
           onChange={(event) => edit({ quantity: event.target.value })}
@@ -283,11 +278,10 @@ function ItemRow({
           inputMode="decimal"
           dir="ltr"
           placeholder="0"
-          className={`${fieldClass} text-center`}
+          className={`${fieldClass} text-center tabular-nums`}
         />
       </td>
-      <td className="col-span-2 block px-0 py-0 md:table-cell md:px-2 md:py-2">
-        <FieldLabel>تێبینی</FieldLabel>
+      <td className={cellClass}>
         <input
           value={row.notes}
           onChange={(event) => edit({ notes: event.target.value })}
@@ -296,32 +290,27 @@ function ItemRow({
           className={fieldClass}
         />
       </td>
-      <td className="col-span-2 block px-0 py-0 md:table-cell md:px-2 md:py-2">
-        <FieldLabel>کۆی گشتی یەک بابەت</FieldLabel>
-        <div className="flex h-10 items-center justify-center rounded-xl bg-slate-900 px-3 text-sm font-semibold text-emerald-400 md:bg-slate-950">
-          {formatMeasurement(total)}
-        </div>
-        <p className="mt-1 text-center text-[11px] leading-5 break-words text-slate-500">
-          {status === "saving" ? "خەریکە پاشەکەوت دەکرێت..." : null}
-          {status === "saved" ? <span className="text-emerald-400">پاشەکەوتکرا</span> : null}
-          {status === "error" ? <span className="text-rose-300">{error}</span> : null}
-        </p>
+      <td className={`${cellClass} text-center`}>
+        <div className="px-1 text-[11px] font-semibold tabular-nums text-emerald-400">{formatMeasurement(total)}</div>
+        {status === "idle" ? null : (
+          <p className="mt-0.5 text-center text-[10px] leading-none whitespace-nowrap text-slate-500">
+            {status === "saving" ? "خەریکە پاشەکەوت دەکرێت..." : null}
+            {status === "saved" ? <span className="text-emerald-400">پاشەکەوتکرا</span> : null}
+            {status === "error" ? <span className="text-rose-300">{error}</span> : null}
+          </p>
+        )}
       </td>
-      <td className="col-span-2 block px-0 py-0 md:table-cell md:px-2 md:py-2">
+      <td className={cellClass}>
         <button
           type="button"
           onClick={onDelete}
-          className="h-10 w-full rounded-xl px-3 text-xs font-medium text-rose-300 transition hover:bg-rose-500/10 md:w-auto"
+          className="h-7 whitespace-nowrap rounded px-1 text-[10px] font-medium text-rose-300 transition hover:bg-rose-500/10"
         >
           سڕینەوە
         </button>
       </td>
     </tr>
   );
-}
-
-function FieldLabel({ children }: { children: string }) {
-  return <span className="mb-1 block text-xs font-medium text-slate-400 md:hidden">{children}</span>;
 }
 
 function toDraft(item: ContainerItem): ItemDraft {
