@@ -138,18 +138,23 @@ export function ItemsTable({
               ))
             )}
           </tbody>
+          <tfoot>
+            <tr className="bg-emerald-950/40 text-xs">
+              <td colSpan={4} className="border border-emerald-400/25 px-1 py-1.5 text-end text-[10px] leading-tight text-emerald-100/80">
+                کۆی گشتی عددی هەموو تاجرەکان
+              </td>
+              <td className="border border-emerald-400/40 bg-emerald-950/60 px-0.5 py-1.5 text-center text-sm font-semibold tabular-nums text-emerald-300">
+                {formatMeasurement(quantityTotal)}
+              </td>
+              <td className="border border-emerald-400/25" />
+              <td colSpan={2} className="border border-emerald-400/40 bg-emerald-950/60 px-1 py-1.5 text-center">
+                <p className="text-[10px] leading-tight text-emerald-100/80">کۆی گشتی قیاسی هەموو تاجرەکان</p>
+                <p className="text-sm font-semibold tabular-nums text-emerald-300">{formatMeasurement(measurementTotal)}</p>
+              </td>
+              <td className="border border-emerald-400/25" />
+            </tr>
+          </tfoot>
         </table>
-      </div>
-
-      <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
-        <div className="item-card rounded-2xl border border-white/10 bg-slate-950 px-4 py-3 text-start">
-          <p className="text-xs text-slate-400">کۆی گشتی عددی هەموو تاجرەکان</p>
-          <p className="mt-1 text-2xl font-semibold tabular-nums text-emerald-400">{formatMeasurement(quantityTotal)}</p>
-        </div>
-        <div className="item-card rounded-2xl border border-white/10 bg-slate-950 px-4 py-3 text-start">
-          <p className="text-xs text-slate-400">کۆی گشتی قیاسی هەموو تاجرەکان</p>
-          <p className="mt-1 text-2xl font-semibold tabular-nums text-emerald-400">{formatMeasurement(measurementTotal)}</p>
-        </div>
       </div>
     </div>
   );
