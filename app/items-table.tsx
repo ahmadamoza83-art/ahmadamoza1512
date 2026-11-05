@@ -12,7 +12,7 @@ import {
 } from "@/lib/item-measure";
 
 const fieldClass =
-  "admin-field box-border h-9 w-full min-w-0 rounded-lg border border-slate-700 bg-slate-900 px-2 text-xs leading-none text-white caret-white outline-none placeholder:text-slate-500 focus:border-emerald-400";
+  "admin-field box-border h-7 w-full min-w-0 max-w-full rounded border border-slate-700 bg-slate-900 px-0.5 text-[11px] leading-none text-white caret-white outline-none placeholder:text-slate-500 focus:border-emerald-400";
 
 export function ItemsTable({
   containerId,
@@ -154,18 +154,18 @@ export function ItemsTable({
         </p>
       ) : null}
 
-      <div className="w-full overflow-x-auto">
-        <table className="w-full min-w-[760px] table-fixed border-collapse text-start text-xs">
+      <div className="w-full max-w-full overflow-x-hidden">
+        <table className="w-full max-w-full table-fixed border-collapse text-start text-[11px]">
           <colgroup>
-            <col className="w-[18%]" />
-            <col className="w-[12%]" />
-            <col className="w-[12%]" />
-            <col className="w-[12%]" />
-            <col className="w-[12%]" />
             <col className="w-[16%]" />
-            <col className="w-[7%]" />
-            <col className="w-[7%]" />
-            <col className="w-[4%]" />
+            <col className="w-[11%]" />
+            <col className="w-[11%]" />
+            <col className="w-[11%]" />
+            <col className="w-[10%]" />
+            <col className="w-[14%]" />
+            <col className="w-[11%]" />
+            <col className="w-[10%]" />
+            <col className="w-[6%]" />
           </colgroup>
           <thead>
             <tr className="bg-slate-950 text-slate-300">
@@ -175,7 +175,7 @@ export function ItemsTable({
               <th className={headClass}>بەرزی</th>
               <th className={headClass}>عدد</th>
               <th className={headClass}>
-                <span className="inline-flex items-center justify-center gap-1">
+                <span className="inline-flex flex-wrap items-center justify-center gap-0.5">
                   <PencilIcon />
                   تێبینی
                 </span>
@@ -217,17 +217,17 @@ export function ItemsTable({
             )}
           </tbody>
           <tfoot>
-            <tr className="bg-emerald-950/40 text-xs">
-              <td colSpan={4} className="border border-emerald-400/25 px-1 py-1.5 text-end text-[10px] leading-tight text-emerald-100/80">
+            <tr className="bg-emerald-950/40 text-[11px]">
+              <td colSpan={4} className="border border-emerald-400/25 px-0.5 py-1 text-end text-[10px] leading-tight text-emerald-100/80">
                 کۆی گشتی عدد
               </td>
-              <td className="border border-emerald-400/40 bg-emerald-950/60 px-0.5 py-1.5 text-center text-sm font-semibold tabular-nums text-emerald-300">
+              <td className="border border-emerald-400/40 bg-emerald-950/60 px-0.5 py-1 text-center text-[11px] font-semibold break-all tabular-nums text-emerald-300">
                 {formatMeasurement(quantityTotal)}
               </td>
               <td className="border border-emerald-400/25" />
-              <td colSpan={2} className="border border-emerald-400/40 bg-emerald-950/60 px-1 py-1.5 text-center">
+              <td colSpan={2} className="border border-emerald-400/40 bg-emerald-950/60 px-0.5 py-1 text-center">
                 <p className="text-[10px] leading-tight text-emerald-100/80">کۆی گشتی قیاسەکان</p>
-                <p className="text-sm font-semibold tabular-nums text-emerald-300">{formatMeasurement(measurementTotal)}</p>
+                <p className="text-[11px] font-semibold break-all tabular-nums text-emerald-300">{formatMeasurement(measurementTotal)}</p>
               </td>
               <td className="border border-emerald-400/25" />
             </tr>
@@ -238,8 +238,8 @@ export function ItemsTable({
   );
 }
 
-const headClass = "border border-white/10 px-0.5 py-1 text-center text-[10px] font-medium leading-tight break-words";
-const cellClass = "border border-white/10 p-0.5 align-middle";
+const headClass = "border border-white/10 px-px py-1 text-center text-[9px] font-medium leading-tight break-words sm:text-[10px]";
+const cellClass = "border border-white/10 p-px align-middle overflow-hidden";
 
 function ItemRow({
   row,
@@ -348,8 +348,8 @@ function ItemRow({
     <tr>
       {lead ? (
         <td rowSpan={span} className={`${cellClass} align-middle`}>
-          <div className="flex items-center gap-1">
-            <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-emerald-500/15 text-[11px] font-semibold text-emerald-300">
+          <div className="flex min-w-0 items-center gap-0.5">
+            <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-emerald-500/15 text-[9px] font-semibold text-emerald-300">
               {merchantBadge(row.merchant)}
             </span>
             <input
@@ -366,7 +366,7 @@ function ItemRow({
               onKeyDown={onEnter}
               placeholder="بازرگان"
               aria-label="ناوی بازرگان"
-              className={`${fieldClass} text-start`}
+              className={`${fieldClass} min-w-0 flex-1 text-start`}
             />
           </div>
         </td>
@@ -425,24 +425,21 @@ function ItemRow({
         />
       </td>
       <td className={cellClass}>
-        <div className="flex items-center gap-1">
-          <PencilIcon />
-          <input
-            value={row.notes}
-            onChange={(event) => edit({ notes: event.target.value })}
-            onBlur={flush}
-            onKeyDown={onEnter}
-            placeholder="تێبینی"
-            aria-label="تێبینی"
-            className={fieldClass}
-          />
-        </div>
+        <input
+          value={row.notes}
+          onChange={(event) => edit({ notes: event.target.value })}
+          onBlur={flush}
+          onKeyDown={onEnter}
+          placeholder="تێبینی"
+          aria-label="تێبینی"
+          className={fieldClass}
+        />
       </td>
-      <td className={`${cellClass} text-center text-[11px] font-semibold tabular-nums text-emerald-400`}>
+      <td className={`${cellClass} text-center text-[10px] font-semibold break-all tabular-nums leading-tight text-emerald-400`}>
         {rowMeasure(row)}
       </td>
       {lead ? (
-        <td rowSpan={span} className={`${cellClass} align-middle text-center text-[11px] font-semibold tabular-nums text-emerald-300`}>
+        <td rowSpan={span} className={`${cellClass} align-middle text-center text-[10px] font-semibold break-all tabular-nums leading-tight text-emerald-300`}>
           {merchantTotal}
         </td>
       ) : null}
