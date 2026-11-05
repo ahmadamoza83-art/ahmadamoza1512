@@ -28,11 +28,6 @@ export function ItemsTable({
 
   const quantityTotal = rows.reduce((sum, row) => sum + liveNumber(row.quantity), 0);
   const measurementTotal = rows.reduce((sum, row) => sum + lineMeasurement(row), 0);
-  const merchantTotals = new Map<string, number>();
-  for (const row of rows) {
-    const key = row.merchant.trim();
-    merchantTotals.set(key, (merchantTotals.get(key) ?? 0) + lineMeasurement(row));
-  }
 
   function updateRow(next: ItemDraft) {
     setRows((current) => current.map((row) => (row.id === next.id ? next : row)));
@@ -130,10 +125,10 @@ export function ItemsTable({
                 <ItemRow
                   key={row.id}
                   row={row}
-                  merchantTotal={merchantTotals.get(row.merchant.trim()) ?? 0}
                   autoFocus={row.id === focusId}
                   onChange={updateRow}
                   onDelete={() => void removeRow(row.id)}
+                  onError={setTableError}
                 />
               ))
             )}
@@ -141,14 +136,14 @@ export function ItemsTable({
           <tfoot>
             <tr className="bg-emerald-950/40 text-xs">
               <td colSpan={4} className="border border-emerald-400/25 px-1 py-1.5 text-end text-[10px] leading-tight text-emerald-100/80">
-                کۆی گشتی عددی هەموو تاجرەکان
+                کۆی گشتی عدد
               </td>
               <td className="border border-emerald-400/40 bg-emerald-950/60 px-0.5 py-1.5 text-center text-sm font-semibold tabular-nums text-emerald-300">
                 {formatMeasurement(quantityTotal)}
               </td>
               <td className="border border-emerald-400/25" />
               <td colSpan={2} className="border border-emerald-400/40 bg-emerald-950/60 px-1 py-1.5 text-center">
-                <p className="text-[10px] leading-tight text-emerald-100/80">کۆی گشتی قیاسی هەموو تاجرەکان</p>
+                <p className="text-[10px] leading-tight text-emerald-100/80">کۆی گشتی قیاسەکان</p>
                 <p className="text-sm font-semibold tabular-nums text-emerald-300">{formatMeasurement(measurementTotal)}</p>
               </td>
               <td className="border border-emerald-400/25" />
@@ -165,19 +160,17 @@ const cellClass = "border border-white/10 p-0.5 align-middle";
 
 function ItemRow({
   row,
-  merchantTotal,
   autoFocus,
   onChange,
   onDelete,
+  onError,
 }: {
   row: ItemDraft;
-  merchantTotal: number;
   autoFocus: boolean;
   onChange: (row: ItemDraft) => void;
   onDelete: () => void;
+  onError: (message: string) => void;
 }) {
-  const [status, setStatus] = useState<"idle" | "saving" | "saved" | "error">("idle");
-  const [error, setError] = useState("");
   const latest = useRef(row);
   const savedKey = useRef(draftKey(row));
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -191,40 +184,23 @@ function ItemRow({
       const next = latest.current;
       const parsed = parseItemDraft(next);
       if (!parsed.ok) {
-        if (notify) {
-          setStatus("error");
-          setError(parsed.message);
-        }
+        if (notify) onError(parsed.message);
         return;
       }
 
       const key = JSON.stringify(parsed.value);
-      if (key === savedKey.current) {
-        if (notify) setStatus((current) => (current === "saving" ? "saved" : current));
-        return;
-      }
+      if (key === savedKey.current) return;
 
       const token = ++request.current;
-      if (notify) {
-        setStatus("saving");
-        setError("");
-      }
-
       const result = await updateContainerItem(next.id, parsed.value);
       if (token !== request.current) return;
       if (!result.ok) {
-        if (notify) {
-          setStatus("error");
-          setError(result.message);
-        }
+        if (notify) onError(result.message);
         return;
       }
 
       savedKey.current = key;
-      if (notify) {
-        setStatus("saved");
-        setError("");
-      }
+      if (notify) onError("");
     };
   });
 
@@ -333,18 +309,11 @@ function ItemRow({
           className={fieldClass}
         />
       </td>
-      <td className={`${cellClass} text-center`}>
-        <div className="truncate px-0.5 text-[11px] font-semibold tabular-nums text-emerald-400">{formatMeasurement(total)}</div>
-        {status === "idle" ? null : (
-          <p className="truncate text-center text-[9px] leading-none text-slate-500" title={error}>
-            {status === "saving" ? "..." : null}
-            {status === "saved" ? <span className="text-emerald-400">پاشەکەوتکرا</span> : null}
-            {status === "error" ? <span className="text-rose-300">{error}</span> : null}
-          </p>
-        )}
+      <td className={`${cellClass} text-center text-[11px] font-semibold tabular-nums text-emerald-400`}>
+        {formatMeasurement(total)}
       </td>
       <td className={`${cellClass} text-center text-[11px] font-semibold tabular-nums text-emerald-300`}>
-        {formatMeasurement(merchantTotal)}
+        {rowMeasure(row)}
       </td>
       <td className={`${cellClass} text-center`}>
         <button
@@ -375,6 +344,12 @@ function toDraft(item: ContainerItem): ItemDraft {
 function fieldNumber(value: number | null) {
   if (value === null || Number.isNaN(value)) return "";
   return String(value);
+}
+
+function rowMeasure(row: ItemDraft) {
+  const unused = [row.width, row.length, row.height, row.quantity].every((value) => value.trim() === "");
+  if (unused) return "";
+  return formatMeasurement(lineMeasurement(row));
 }
 
 function draftKey(row: ItemDraft) {
