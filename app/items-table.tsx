@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type KeyboardEvent } from "react";
 import { createContainerItem, deleteContainerItem, updateContainerItem } from "@/app/actions";
 import type { ContainerItem } from "@/lib/containers";
 import {
@@ -25,25 +25,101 @@ export function ItemsTable({
   const [adding, setAdding] = useState(false);
   const [tableError, setTableError] = useState("");
   const [focusId, setFocusId] = useState<string | null>(null);
+  const [focusField, setFocusField] = useState<"merchant" | "width">("merchant");
+  const rowsRef = useRef(rows);
+  const addingRef = useRef(false);
+  const groupTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const groupIds = useRef<string[]>([]);
 
+  useEffect(() => {
+    rowsRef.current = rows;
+  });
+
+  const groups = groupRows(rows);
   const quantityTotal = rows.reduce((sum, row) => sum + liveNumber(row.quantity), 0);
   const measurementTotal = rows.reduce((sum, row) => sum + lineMeasurement(row), 0);
 
   function updateRow(next: ItemDraft) {
-    setRows((current) => current.map((row) => (row.id === next.id ? next : row)));
+    const updated = rowsRef.current.map((row) => (row.id === next.id ? next : row));
+    rowsRef.current = updated;
+    setRows(updated);
   }
 
-  async function addRow() {
+  async function addRow(merchant = "") {
+    if (addingRef.current) return;
+    addingRef.current = true;
     setAdding(true);
     setTableError("");
     const result = await createContainerItem(containerId);
     setAdding(false);
+    addingRef.current = false;
     if (!result.ok) {
       setTableError(result.message);
       return;
     }
-    setRows((current) => [...current, toDraft(result.item)]);
-    setFocusId(result.item.id);
+
+    const name = merchant.trim();
+    const draft = { ...toDraft(result.item), merchant: name };
+    const next = [...rowsRef.current];
+    let insertAt = next.length;
+    const key = merchantKey(name);
+    if (key) {
+      for (let index = next.length - 1; index >= 0; index -= 1) {
+        if (merchantKey(next[index].merchant) === key) {
+          insertAt = index + 1;
+          break;
+        }
+      }
+    }
+    next.splice(insertAt, 0, draft);
+    rowsRef.current = next;
+    setRows(next);
+    setFocusField(key ? "width" : "merchant");
+    setFocusId(draft.id);
+
+    if (!key) return;
+    const parsed = parseItemDraft(draft);
+    if (!parsed.ok) {
+      setTableError(parsed.message);
+      return;
+    }
+    const saved = await updateContainerItem(draft.id, parsed.value);
+    if (!saved.ok) setTableError(saved.message);
+  }
+
+  function patchMerchant(ids: string[], merchant: string) {
+    groupIds.current = ids;
+    const next = rowsRef.current.map((row) => (ids.includes(row.id) ? { ...row, merchant } : row));
+    rowsRef.current = next;
+    setRows(next);
+    if (groupTimer.current) clearTimeout(groupTimer.current);
+    groupTimer.current = setTimeout(() => {
+      groupTimer.current = null;
+      void saveIds(ids);
+    }, 500);
+  }
+
+  function flushMerchant() {
+    if (!groupTimer.current) return;
+    clearTimeout(groupTimer.current);
+    groupTimer.current = null;
+    void saveIds(groupIds.current);
+  }
+
+  async function saveIds(ids: string[]) {
+    for (const row of rowsRef.current) {
+      if (!ids.includes(row.id)) continue;
+      const parsed = parseItemDraft(row);
+      if (!parsed.ok) {
+        setTableError(parsed.message);
+        return;
+      }
+      const result = await updateContainerItem(row.id, parsed.value);
+      if (!result.ok) {
+        setTableError(result.message);
+        return;
+      }
+    }
   }
 
   async function removeRow(id: string) {
@@ -53,7 +129,9 @@ export function ItemsTable({
       setTableError(result.message);
       return;
     }
-    setRows((current) => current.filter((row) => row.id !== id));
+    const updated = rowsRef.current.filter((row) => row.id !== id);
+    rowsRef.current = updated;
+    setRows(updated);
   }
 
   return (
@@ -121,16 +199,25 @@ export function ItemsTable({
                 </td>
               </tr>
             ) : (
-              rows.map((row) => (
-                <ItemRow
-                  key={row.id}
-                  row={row}
-                  autoFocus={row.id === focusId}
-                  onChange={updateRow}
-                  onDelete={() => void removeRow(row.id)}
-                  onError={setTableError}
-                />
-              ))
+              groups.flatMap((group) =>
+                group.map((row, index) => (
+                  <ItemRow
+                    key={row.id}
+                    row={row}
+                    lead={index === 0}
+                    span={group.length}
+                    merchantTotal={groupTotal(group)}
+                    autoFocus={row.id === focusId}
+                    focusField={focusField}
+                    onChange={updateRow}
+                    onDelete={() => void removeRow(row.id)}
+                    onError={setTableError}
+                    onPatchMerchant={(merchant) => patchMerchant(group.map((item) => item.id), merchant)}
+                    onFlushMerchant={flushMerchant}
+                    onAddLine={(merchant) => void addRow(merchant)}
+                  />
+                )),
+              )
             )}
           </tbody>
           <tfoot>
@@ -160,22 +247,37 @@ const cellClass = "border border-white/10 p-0.5 align-middle";
 
 function ItemRow({
   row,
+  lead,
+  span,
+  merchantTotal,
   autoFocus,
+  focusField,
   onChange,
   onDelete,
   onError,
+  onPatchMerchant,
+  onFlushMerchant,
+  onAddLine,
 }: {
   row: ItemDraft;
+  lead: boolean;
+  span: number;
+  merchantTotal: string;
   autoFocus: boolean;
+  focusField: "merchant" | "width";
   onChange: (row: ItemDraft) => void;
   onDelete: () => void;
   onError: (message: string) => void;
+  onPatchMerchant: (merchant: string) => void;
+  onFlushMerchant: () => void;
+  onAddLine: (merchant: string) => void;
 }) {
   const latest = useRef(row);
   const savedKey = useRef(draftKey(row));
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const request = useRef(0);
   const merchantRef = useRef<HTMLInputElement>(null);
+  const widthRef = useRef<HTMLInputElement>(null);
   const saveNow = useRef<(notify: boolean) => Promise<void>>(async () => {});
 
   useEffect(() => {
@@ -205,8 +307,10 @@ function ItemRow({
   });
 
   useEffect(() => {
-    if (autoFocus) merchantRef.current?.focus();
-  }, [autoFocus]);
+    if (!autoFocus) return;
+    const field = focusField === "width" ? widthRef.current : merchantRef.current;
+    field?.focus();
+  }, [autoFocus, focusField]);
 
   useEffect(() => {
     return () => {
@@ -236,26 +340,43 @@ function ItemRow({
     void saveNow.current(true);
   }
 
-  const total = lineMeasurement(row);
+  function onEnter(event: KeyboardEvent<HTMLInputElement>) {
+    if (event.key !== "Enter" || event.shiftKey || event.nativeEvent.isComposing) return;
+    event.preventDefault();
+    flush();
+    onFlushMerchant();
+    onAddLine(latest.current.merchant);
+  }
 
   return (
     <tr>
+      {lead ? (
+        <td rowSpan={span} className={`${cellClass} align-middle`}>
+          <input
+            ref={merchantRef}
+            value={row.merchant}
+            onChange={(event) => {
+              latest.current = { ...latest.current, merchant: event.target.value };
+              onPatchMerchant(event.target.value);
+            }}
+            onBlur={() => {
+              flush();
+              onFlushMerchant();
+            }}
+            onKeyDown={onEnter}
+            placeholder="بازرگان"
+            aria-label="ناوی بازرگان"
+            className={`${fieldClass} text-start`}
+          />
+        </td>
+      ) : null}
       <td className={cellClass}>
         <input
-          ref={merchantRef}
-          value={row.merchant}
-          onChange={(event) => edit({ merchant: event.target.value })}
-          onBlur={flush}
-          placeholder="بازرگان"
-          aria-label="ناوی بازرگان"
-          className={`${fieldClass} text-start`}
-        />
-      </td>
-      <td className={cellClass}>
-        <input
+          ref={widthRef}
           value={row.width}
           onChange={(event) => edit({ width: event.target.value })}
           onBlur={flush}
+          onKeyDown={onEnter}
           inputMode="decimal"
           dir="ltr"
           placeholder="0"
@@ -268,6 +389,7 @@ function ItemRow({
           value={row.length}
           onChange={(event) => edit({ length: event.target.value })}
           onBlur={flush}
+          onKeyDown={onEnter}
           inputMode="decimal"
           dir="ltr"
           placeholder="0"
@@ -280,6 +402,7 @@ function ItemRow({
           value={row.height}
           onChange={(event) => edit({ height: event.target.value })}
           onBlur={flush}
+          onKeyDown={onEnter}
           inputMode="decimal"
           dir="ltr"
           placeholder="0"
@@ -292,6 +415,7 @@ function ItemRow({
           value={row.quantity}
           onChange={(event) => edit({ quantity: event.target.value })}
           onBlur={flush}
+          onKeyDown={onEnter}
           inputMode="decimal"
           dir="ltr"
           placeholder="0"
@@ -304,17 +428,20 @@ function ItemRow({
           value={row.notes}
           onChange={(event) => edit({ notes: event.target.value })}
           onBlur={flush}
+          onKeyDown={onEnter}
           placeholder="تێبینی"
           aria-label="تێبینی"
           className={fieldClass}
         />
       </td>
       <td className={`${cellClass} text-center text-[11px] font-semibold tabular-nums text-emerald-400`}>
-        {formatMeasurement(total)}
-      </td>
-      <td className={`${cellClass} text-center text-[11px] font-semibold tabular-nums text-emerald-300`}>
         {rowMeasure(row)}
       </td>
+      {lead ? (
+        <td rowSpan={span} className={`${cellClass} align-middle text-center text-[11px] font-semibold tabular-nums text-emerald-300`}>
+          {merchantTotal}
+        </td>
+      ) : null}
       <td className={`${cellClass} text-center`}>
         <button
           type="button"
@@ -346,9 +473,42 @@ function fieldNumber(value: number | null) {
   return String(value);
 }
 
+function merchantKey(name: string) {
+  return name.trim().replace(/\s+/g, " ").toLocaleLowerCase();
+}
+
+function groupRows(rows: ItemDraft[]) {
+  const groups: ItemDraft[][] = [];
+  const named = new Map<string, ItemDraft[]>();
+  for (const row of rows) {
+    const key = merchantKey(row.merchant);
+    if (!key) {
+      groups.push([row]);
+      continue;
+    }
+    const existing = named.get(key);
+    if (existing) {
+      existing.push(row);
+      continue;
+    }
+    const group = [row];
+    named.set(key, group);
+    groups.push(group);
+  }
+  return groups;
+}
+
+function groupTotal(group: ItemDraft[]) {
+  if (group.every((row) => unusedRow(row))) return "";
+  return formatMeasurement(group.reduce((sum, row) => sum + lineMeasurement(row), 0));
+}
+
+function unusedRow(row: ItemDraft) {
+  return [row.width, row.length, row.height, row.quantity].every((value) => value.trim() === "");
+}
+
 function rowMeasure(row: ItemDraft) {
-  const unused = [row.width, row.length, row.height, row.quantity].every((value) => value.trim() === "");
-  if (unused) return "";
+  if (unusedRow(row)) return "";
   return formatMeasurement(lineMeasurement(row));
 }
 
